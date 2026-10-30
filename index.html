@@ -44,6 +44,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <!-- html2pdf.js para generar PDFs limpios y profesionales -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -88,6 +91,7 @@
       -webkit-tap-highlight-color: transparent;
       background-color: var(--app-bg) !important;
       color: var(--text-main) !important;
+      overflow-x: hidden;
     }
 
     .custom-card {
@@ -154,17 +158,17 @@
     }
   </style>
 </head>
-<body class="min-h-screen transition-colors duration-200 flex flex-col">
+<body class="min-h-screen transition-colors duration-200 flex flex-col w-full">
 
   <!-- PANTALLA DE LOGIN (INICIO DE SESIÓN) -->
-  <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900 bg-cover bg-center" style="background-image: url('');">
+  <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen" style="background-image: url('');">
     <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
-    <div class="relative w-full max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100">
+    <div class="relative w-full max-w-sm sm:max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100 mx-auto">
       <div class="text-center space-y-2">
         <div id="login-logo-container" class="mx-auto w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden">
-          <i id="login-brand-icon" data-lucide="umbrella" class="w-10 h-10 text-slate-900"></i>
+          <i id="login-brand-icon" data-lucide="store" class="w-10 h-10 text-slate-900"></i>
         </div>
-        <h2 id="login-title" class="text-xl font-extrabold tracking-tight">StockPro Distribución</h2>
+        <h2 id="login-title" class="text-xl font-extrabold tracking-tight truncate">StockPro Distribución</h2>
         <p class="text-xs text-slate-400">Ingresa tus credenciales para acceder</p>
       </div>
 
@@ -197,25 +201,25 @@
   </div>
 
   <!-- APLICACIÓN PRINCIPAL (OCULTA HASTA LOGIN) -->
-  <div id="app-wrapper" class="hidden min-h-screen flex flex-col">
+  <div id="app-wrapper" class="hidden min-h-screen flex flex-col w-full max-w-full">
 
     <!-- STICKY TOP HEADER & NAVIGATION -->
-    <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkcard/95 backdrop-blur border-b border-slate-200 dark:border-darkborder shadow-sm custom-card">
+    <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkcard/95 backdrop-blur border-b border-slate-200 dark:border-darkborder shadow-sm custom-card w-full">
       <div class="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-2 rounded-xl font-extrabold flex items-center justify-center shadow-md shadow-brand-500/20 custom-bg-accent overflow-hidden w-9 h-9">
-            <i id="header-brand-icon" data-lucide="umbrella" class="w-5 h-5"></i>
+        <div class="flex items-center gap-2 min-w-0">
+          <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-2 rounded-xl font-extrabold flex items-center justify-center shadow-md shadow-brand-500/20 custom-bg-accent overflow-hidden w-9 h-9 shrink-0">
+            <i id="header-brand-icon" data-lucide="store" class="w-5 h-5"></i>
           </div>
-          <div>
+          <div class="min-w-0">
             <h1 class="font-extrabold text-sm sm:text-base leading-none flex items-center gap-1.5">
-              <span id="header-store-name" class="truncate max-w-[150px] sm:max-w-none custom-text-main">StockPro Distribución</span>
+              <span id="header-store-name" class="truncate max-w-[140px] sm:max-w-none custom-text-main">StockPro Distribución</span>
             </h1>
-            <p id="header-store-subtitle" class="text-[10px] custom-text-muted font-medium hidden sm:block">Control Físico y Venta de Variedades</p>
+            <p id="header-store-subtitle" class="text-[10px] custom-text-muted font-medium hidden sm:block truncate">Control Físico y Venta de Variedades</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-1.5">
-          <span id="sync-status-badge" class="text-[10px] bg-amber-500 text-white px-2 py-1 rounded-full flex items-center gap-1 font-bold">
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span id="sync-status-badge" class="text-[10px] bg-amber-500 text-white px-2 py-1 rounded-full flex items-center gap-1 font-bold hidden sm:flex">
             <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Conectando...
           </span>
 
@@ -233,7 +237,7 @@
           <!-- Botón de Usuario Actual / Logout -->
           <div class="flex items-center gap-1 bg-slate-100 dark:bg-darkbg px-2 py-1 rounded-xl border border-slate-200 dark:border-darkborder text-xs font-bold">
             <i data-lucide="user" class="w-3.5 h-3.5 text-brand-500"></i>
-            <span id="user-display-name" class="custom-text-main text-[11px]">admin</span>
+            <span id="user-display-name" class="custom-text-main text-[11px] truncate max-w-[80px]">admin</span>
             <button onclick="handleLogout()" class="text-red-500 ml-1 p-0.5 hover:text-red-600" title="Cerrar Sesión">
               <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
             </button>
@@ -242,7 +246,7 @@
       </div>
 
       <!-- HORIZONTAL NAVIGATION -->
-      <div class="border-t border-slate-200/60 dark:border-darkborder/60 bg-slate-50/90 dark:bg-darkbg/90 px-2 py-1.5 overflow-x-auto no-scrollbar">
+      <div class="border-t border-slate-200/60 dark:border-darkborder/60 bg-slate-50/90 dark:bg-darkbg/90 px-2 py-1.5 overflow-x-auto no-scrollbar w-full">
         <div class="flex items-center gap-1.5 min-w-max">
           <button onclick="switchTab('inventory')" id="tab-btn-inventory" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-brand-500 text-darkbg shadow-sm custom-bg-accent">
             <i id="nav-icon-inventory" data-lucide="warehouse" class="w-3.5 h-3.5"></i> <span id="nav-lbl-inventory">Inventario</span>
@@ -264,10 +268,10 @@
     </header>
 
     <!-- MAIN CONTAINER -->
-    <main class="max-w-7xl mx-auto w-full flex-1 p-2 sm:p-4 lg:p-6">
+    <main class="max-w-7xl mx-auto w-full flex-1 p-2 sm:p-4 lg:p-6 box-border">
       
       <!-- SECTION 1: INVENTORY -->
-      <section id="tab-inventory" class="tab-content space-y-3">
+      <section id="tab-inventory" class="tab-content space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
           <div class="relative">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500 font-bold"></i>
@@ -307,13 +311,13 @@
           </div>
         </div>
 
-        <div id="inventory-render-container"></div>
+        <div id="inventory-render-container" class="w-full"></div>
 
-        <div id="inventory-pagination" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card"></div>
+        <div id="inventory-pagination" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card w-full"></div>
       </section>
 
       <!-- SECTION 2: POS -->
-      <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
         <div class="lg:col-span-7 space-y-3">
           <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -389,7 +393,7 @@
       </section>
 
       <!-- SECTION 3: SALES -->
-      <section id="tab-sales" class="tab-content hidden space-y-3">
+      <section id="tab-sales" class="tab-content hidden space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-3 custom-card">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="font-extrabold text-sm flex items-center gap-2">
@@ -420,11 +424,11 @@
           </div>
         </div>
 
-        <div id="sales-list-container" class="space-y-2"></div>
+        <div id="sales-list-container" class="space-y-2 w-full"></div>
       </section>
 
       <!-- SECTION 4: WAREHOUSES -->
-      <section id="tab-warehouses" class="tab-content hidden space-y-3">
+      <section id="tab-warehouses" class="tab-content hidden space-y-3 w-full">
         <div class="flex items-center justify-between">
           <h2 class="font-extrabold text-base">Almacenes y Depósitos</h2>
           <button onclick="openWarehouseModal()" class="bg-brand-500 text-darkbg font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-md custom-bg-accent">
@@ -435,7 +439,7 @@
       </section>
 
       <!-- SECTION 5: SETTINGS & USERS -->
-      <section id="tab-settings" class="tab-content hidden space-y-3">
+      <section id="tab-settings" class="tab-content hidden space-y-3 w-full">
         <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-4 rounded-2xl shadow-sm space-y-4 custom-card">
           <h2 class="font-bold text-base border-b border-slate-200 dark:border-darkborder pb-2 flex items-center gap-2">
             <i data-lucide="settings" class="w-4 h-4 text-brand-500"></i> Personalización de Empresa, Usuarios y Fondo
@@ -462,7 +466,7 @@
                 <label class="block font-bold text-[11px]">Logo Principal (Login y Header)</label>
                 <div class="flex items-center gap-2">
                   <div id="store-logo-preview" class="w-10 h-10 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder flex items-center justify-center overflow-hidden shrink-0 custom-card">
-                    <i data-lucide="image" class="w-5 h-5 text-slate-400"></i>
+                    <i data-lucide="store" class="w-5 h-5 text-slate-400"></i>
                   </div>
                   <input type="file" id="store-logo-input" accept="image/*" onchange="previewStoreLogo(event)" class="text-[10px] text-slate-500">
                 </div>
@@ -736,19 +740,19 @@
   <!-- MODAL: NOTA DE ENTREGA / TICKET CON LOGO -->
   <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white text-slate-900 border border-slate-200 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      <div id="print-area" class="p-5 overflow-y-auto space-y-3 text-xs">
-        <div class="text-center border-b pb-2 space-y-1">
-          <div id="receipt-logo-container" class="flex justify-center hidden">
-            <img id="receipt-logo-img" src="" class="h-12 w-auto object-contain">
+      <div id="print-area" class="p-6 bg-white space-y-3 text-xs">
+        <div class="text-center border-b pb-3 space-y-1">
+          <div id="receipt-logo-container" class="flex justify-center hidden mb-2">
+            <img id="receipt-logo-img" src="" class="h-14 w-auto object-contain">
           </div>
-          <h2 id="receipt-store-name" class="font-black text-base uppercase">MI ALMACÉN</h2>
-          <p id="receipt-store-doc" class="text-[10px] text-slate-500">RIF: J-00000000-0</p>
-          <p id="receipt-store-phone" class="text-[10px] text-slate-500">Tel: +58 000 0000000</p>
-          <p id="receipt-store-address" class="text-[10px] text-slate-500">Dirección</p>
+          <h2 id="receipt-store-name" class="font-black text-base uppercase text-slate-900">MI ALMACÉN</h2>
+          <p id="receipt-store-doc" class="text-[10px] text-slate-600">RIF: J-00000000-0</p>
+          <p id="receipt-store-phone" class="text-[10px] text-slate-600">Tel: +58 000 0000000</p>
+          <p id="receipt-store-address" class="text-[10px] text-slate-600">Dirección</p>
           <div class="inline-block bg-slate-900 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-1">Nota de Entrega</div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 text-[10px] border-b pb-2">
+        <div class="grid grid-cols-2 gap-2 text-[10px] border-b pb-2 text-slate-700">
           <div>
             <p><strong>N° Orden:</strong> <span id="receipt-num">#0001</span></p>
             <p><strong>Fecha:</strong> <span id="receipt-date">--/--/----</span></p>
@@ -759,28 +763,28 @@
           </div>
         </div>
 
-        <table class="w-full text-left text-[10px]">
+        <table class="w-full text-left text-[10px] text-slate-800">
           <thead>
             <tr class="border-b bg-slate-100 font-bold">
-              <th class="py-1 px-1">Cant.</th>
-              <th class="py-1 px-1">Producto</th>
-              <th class="py-1 px-1 text-right">P.Unit</th>
-              <th class="py-1 px-1 text-right">Total</th>
+              <th class="py-1.5 px-1">Cant.</th>
+              <th class="py-1.5 px-1">Producto</th>
+              <th class="py-1.5 px-1 text-right">P.Unit</th>
+              <th class="py-1.5 px-1 text-right">Total</th>
             </tr>
           </thead>
           <tbody id="receipt-items-tbody"></tbody>
         </table>
 
-        <div class="border-t pt-2 text-right">
-          <p class="text-xs font-black">TOTAL: <span id="receipt-total-amount">$0.00</span></p>
+        <div class="border-t pt-2 text-right text-slate-900">
+          <p class="text-sm font-black">TOTAL: <span id="receipt-total-amount" class="text-brand-600">$0.00</span></p>
         </div>
       </div>
 
       <div class="p-3 bg-slate-100 border-t flex flex-wrap items-center justify-between gap-1.5 no-print">
         <button onclick="closeReceiptModal()" class="px-3 py-1.5 rounded-xl bg-slate-200 font-bold text-xs text-slate-700">Cerrar</button>
         <div class="flex items-center gap-1.5">
-          <button onclick="downloadReceiptFile()" class="bg-blue-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1"><i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar</button>
-          <button onclick="sendWhatsAppReceipt()" class="bg-emerald-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> WhatsApp</button>
+          <button onclick="downloadReceiptPDF()" class="bg-blue-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1"><i data-lucide="download" class="w-3.5 h-3.5"></i> PDF</button>
+          <button onclick="sendWhatsAppReceiptPDF()" class="bg-emerald-600 text-white font-bold px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1"><i data-lucide="message-square" class="w-3.5 h-3.5"></i> WhatsApp PDF</button>
           <button onclick="window.print()" class="bg-slate-900 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir</button>
         </div>
       </div>
@@ -807,7 +811,7 @@
       settings: {
         storeName: "StockPro Distribución",
         storeSubtitle: "Control Físico y Venta de Variedades",
-        brandIcon: "umbrella",
+        brandIcon: "store",
         logo: null,
         loginBg: null,
         doc: "J-40982112-9",
@@ -941,7 +945,10 @@
       }
       if (appState.settings.logo) {
         logoContainer.innerHTML = `<img src="${appState.settings.logo}" class="w-full h-full object-cover">`;
+      } else {
+        logoContainer.innerHTML = `<i data-lucide="store" class="w-10 h-10 text-slate-900"></i>`;
       }
+      lucide.createIcons();
     }
 
     function saveStateRemote() {
@@ -978,7 +985,7 @@
             --text-muted: ${colors.textMuted};
             --accent-color: ${colors.accent};
           }
-          body { background-color: var(--app-bg) !important; color: var(--text-main) !important; }
+          body { background-color: var(--app-bg) !important; color: var(--text-main) !important; overflow-x: hidden; }
           .custom-card { background-color: var(--card-bg) !important; color: var(--text-main) !important; }
           .custom-text-main { color: var(--text-main) !important; }
           .custom-text-muted { color: var(--text-muted) !important; }
@@ -1054,7 +1061,7 @@
       if (appState.settings.logo) {
         brandIconBg.innerHTML = `<img src="${appState.settings.logo}" class="w-full h-full object-cover">`;
       } else {
-        brandIconBg.innerHTML = `<i id="header-brand-icon" data-lucide="${appState.settings.brandIcon || 'umbrella'}" class="w-5 h-5"></i>`;
+        brandIconBg.innerHTML = `<i id="header-brand-icon" data-lucide="store" class="w-5 h-5"></i>`;
       }
 
       const labels = appState.settings.labels || {};
@@ -1137,7 +1144,7 @@
       }
 
       if (appState.viewMode === 'list') {
-        let listHtml = `<div class="space-y-2">`;
+        let listHtml = `<div class="space-y-2 w-full">`;
         paginatedProducts.forEach(prod => {
           let whStockRowsHtml = '';
           const prodCodesArr = Array.isArray(prod.codes) ? prod.codes : [prod.code || ''];
@@ -1166,13 +1173,13 @@
           });
 
           listHtml += `
-            <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-2xl p-2.5 shadow-sm space-y-1.5 custom-card">
+            <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-2xl p-2.5 shadow-sm space-y-1.5 custom-card w-full">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-start gap-2 min-w-0 flex-1">
                   <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-darkbg border border-slate-200 dark:border-darkborder shrink-0 flex items-center justify-center overflow-hidden mt-0.5 custom-card">
                     ${prod.image ? `<img src="${prod.image}" class="w-full h-full object-cover">` : `<i data-lucide="package" class="w-5 h-5 text-slate-400"></i>`}
                   </div>
-                  <div class="min-w-0">
+                  <div class="min-w-0 flex-1">
                     <h3 class="font-extrabold text-xs leading-tight truncate custom-text-main">${prod.name}</h3>
                     <div class="flex flex-wrap gap-1 mt-1">
                       ${prodCodesArr.map(c => `<span class="bg-slate-100 dark:bg-darkbg font-mono font-bold text-[9px] text-brand-500 px-1.5 py-0.2 rounded border border-slate-200 dark:border-darkborder">${c}</span>`).join('')}
@@ -1190,7 +1197,7 @@
         listHtml += `</div>`;
         container.innerHTML = listHtml;
       } else {
-        let gridHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">`;
+        let gridHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 w-full">`;
         paginatedProducts.forEach(prod => {
           const prodCodesArr = Array.isArray(prod.codes) ? prod.codes : [prod.code || ''];
           gridHtml += `
@@ -1638,7 +1645,7 @@
         }).join(', ');
 
         const card = document.createElement('div');
-        card.className = "bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-1.5 text-xs custom-card";
+        card.className = "bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-1.5 text-xs custom-card w-full";
         card.innerHTML = `
           <div class="flex items-center justify-between border-b border-slate-100 dark:border-darkborder/50 pb-1.5">
             <div class="flex items-center gap-2">
@@ -1790,45 +1797,104 @@
 
     function closeReceiptModal() { document.getElementById('receipt-modal').classList.add('hidden'); }
 
-    function downloadReceiptFile() {
+    // DESCARGAR TICKET EN PDF CON BUENA PRESENCIA
+    function downloadReceiptPDF() {
+      const element = document.getElementById('print-area');
       const sale = appState.lastCompletedSale;
-      if (!sale) return;
-      let text = `====================================\n        ${sale.store.storeName.toUpperCase()}\nRIF: ${sale.store.doc} | Tel: ${sale.store.phone}\n====================================\nNOTA DE ENTREGA: ${sale.saleNum}\nFecha: ${sale.dateTimeStr}\nCliente: ${sale.customer.name}\n------------------------------------\n`;
-      let total = 0;
-      sale.items.forEach(item => {
-        const prod = appState.products.find(p => p.id === item.productId);
-        if (!prod) return;
-        let unitPrice = sale.isVip ? (item.customVipPrice || 0) : parseFloat(prod.prices?.detal || 0);
-        let subtotal = unitPrice * item.qty;
-        total += subtotal;
-        text += `${item.qty}x ${prod.name} - ${sale.store.currency}${subtotal.toFixed(2)}\n`;
-      });
-      text += `------------------------------------\nTOTAL: ${sale.store.currency}${total.toFixed(2)}\n====================================`;
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const anchor = document.createElement('a');
-      anchor.href = URL.createObjectURL(blob);
-      anchor.download = `Nota_${sale.saleNum.replace('#', '')}.txt`;
-      anchor.click();
+      const opt = {
+        margin:       10,
+        filename:     `Nota_${sale ? sale.saleNum.replace('#', '') : 'Entrega'}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+      };
+      html2pdf().from(element).set(opt).save();
     }
 
-    function sendWhatsAppReceipt() {
+    // ENVIAR TICKET EN PDF POR WHATSAPP (DESCARGA AUTOMÁTICA Y MENSAJE)
+    function sendWhatsAppReceiptPDF() {
       const sale = appState.lastCompletedSale;
       if (!sale) return;
-      let msg = `*${sale.store.storeName.toUpperCase()}*\n📄 *NOTA DE ENTREGA:* ${sale.saleNum}\n👤 *Cliente:* ${sale.customer.name}\n------------------------------------\n`;
-      let total = 0;
-      sale.items.forEach(item => {
-        const prod = appState.products.find(p => p.id === item.productId);
-        if (!prod) return;
-        let unitPrice = sale.isVip ? (item.customVipPrice || 0) : parseFloat(prod.prices?.detal || 0);
-        let subtotal = unitPrice * item.qty;
-        total += subtotal;
-        msg += `• *${item.qty}x* ${prod.name} - ${sale.store.currency}${subtotal.toFixed(2)}\n`;
-      });
-      msg += `------------------------------------\n💰 *TOTAL:* *${sale.store.currency}${total.toFixed(2)}*`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+
+      // Descargar el PDF formal automáticamente
+      downloadReceiptPDF();
+
+      // Abrir WhatsApp con un mensaje amigable
+      const phoneNum = sale.customer?.phone && sale.customer.phone !== '-' ? sale.customer.phone.replace(/[^0-9]/g, '') : '';
+      let msg = `*${sale.store.storeName.toUpperCase()}*\nHola *${sale.customer.name}*, adjunto te enviamos tu comprobante de nota de entrega *${sale.saleNum}* por un total de *${sale.store.currency}${sale.totalAmount.toFixed(2)}*. ¡Gracias por tu compra!`;
+      
+      const url = phoneNum ? `https://api.whatsapp.com/send?phone=${phoneNum}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
     }
 
-    // GESTIÓN DE USUARIOS EN CONFIGURACIÓN
+    function renderWarehouses() {
+      const grid = document.getElementById('warehouses-grid');
+      grid.innerHTML = '';
+      appState.warehouses.forEach(wh => {
+        grid.innerHTML += `
+          <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl flex items-center justify-between shadow-sm custom-card">
+            <div><span class="font-extrabold text-xs block custom-text-main">${wh.name}</span><span class="text-[9px] custom-text-muted font-mono">ID: ${wh.id}</span></div>
+            <div class="flex items-center gap-1">
+              <button onclick="editWarehouse('${wh.id}')" class="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteWarehouse('${wh.id}')" class="text-red-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+            </div>
+          </div>`;
+      });
+      lucide.createIcons();
+    }
+
+    function openWarehouseModal(whId = null) {
+      const modal = document.getElementById('wh-modal');
+      document.getElementById('wh-form').reset();
+      if (whId) {
+        const wh = appState.warehouses.find(w => w.id === whId);
+        if (!wh) return;
+        document.getElementById('wh-modal-title').textContent = "Editar Almacén";
+        document.getElementById('wh-id').value = wh.id;
+        document.getElementById('wh-name').value = wh.name;
+      } else {
+        document.getElementById('wh-modal-title').textContent = "Crear Almacén";
+        document.getElementById('wh-id').value = '';
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeWarehouseModal() { document.getElementById('wh-modal').classList.add('hidden'); }
+
+    function saveWarehouse(e) {
+      e.preventDefault();
+      const id = document.getElementById('wh-id').value || `wh_${Date.now()}`;
+      const name = document.getElementById('wh-name').value.trim();
+      const existingIndex = appState.warehouses.findIndex(w => w.id === id);
+      if (existingIndex >= 0) {
+        appState.warehouses[existingIndex].name = name;
+      } else {
+        appState.warehouses.push({ id, name });
+        appState.products.forEach(p => {
+          if (!p.stock) p.stock = {};
+          if (!p.stock[id]) p.stock[id] = { boxes: 0, loose: 0, rack: "A-01", shelf: "N1" };
+        });
+      }
+      saveStateRemote();
+      closeWarehouseModal();
+      renderAll();
+    }
+
+    function editWarehouse(id) { openWarehouseModal(id); }
+
+    function deleteWarehouse(id) {
+      if (appState.warehouses.length <= 1) {
+        alert("Debe conservarse al menos 1 almacén en el sistema.");
+        return;
+      }
+      if (confirm("¿Estás seguro de eliminar este almacén?")) {
+        appState.warehouses = appState.warehouses.filter(w => w.id !== id);
+        appState.products.forEach(p => { if (p.stock) delete p.stock[id]; });
+        saveStateRemote();
+        renderAll();
+      }
+    }
+
     function renderUsersList() {
       const container = document.getElementById('users-list-container');
       if (!container) return;
@@ -1899,74 +1965,6 @@
       }
       if (confirm("¿Estás seguro de eliminar este usuario?")) {
         appState.users = appState.users.filter(u => u.id !== id);
-        saveStateRemote();
-        renderAll();
-      }
-    }
-
-    function renderWarehouses() {
-      const grid = document.getElementById('warehouses-grid');
-      grid.innerHTML = '';
-      appState.warehouses.forEach(wh => {
-        grid.innerHTML += `
-          <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl flex items-center justify-between shadow-sm custom-card">
-            <div><span class="font-extrabold text-xs block custom-text-main">${wh.name}</span><span class="text-[9px] custom-text-muted font-mono">ID: ${wh.id}</span></div>
-            <div class="flex items-center gap-1">
-              <button onclick="editWarehouse('${wh.id}')" class="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-              ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteWarehouse('${wh.id}')" class="text-red-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-            </div>
-          </div>`;
-      });
-      lucide.createIcons();
-    }
-
-    function openWarehouseModal(whId = null) {
-      const modal = document.getElementById('wh-modal');
-      document.getElementById('wh-form').reset();
-      if (whId) {
-        const wh = appState.warehouses.find(w => w.id === whId);
-        if (!wh) return;
-        document.getElementById('wh-modal-title').textContent = "Editar Almacén";
-        document.getElementById('wh-id').value = wh.id;
-        document.getElementById('wh-name').value = wh.name;
-      } else {
-        document.getElementById('wh-modal-title').textContent = "Crear Almacén";
-        document.getElementById('wh-id').value = '';
-      }
-      modal.classList.remove('hidden');
-    }
-
-    function closeWarehouseModal() { document.getElementById('wh-modal').classList.add('hidden'); }
-
-    function saveWarehouse(e) {
-      e.preventDefault();
-      const id = document.getElementById('wh-id').value || `wh_${Date.now()}`;
-      const name = document.getElementById('wh-name').value.trim();
-      const existingIndex = appState.warehouses.findIndex(w => w.id === id);
-      if (existingIndex >= 0) {
-        appState.warehouses[existingIndex].name = name;
-      } else {
-        appState.warehouses.push({ id, name });
-        appState.products.forEach(p => {
-          if (!p.stock) p.stock = {};
-          if (!p.stock[id]) p.stock[id] = { boxes: 0, loose: 0, rack: "A-01", shelf: "N1" };
-        });
-      }
-      saveStateRemote();
-      closeWarehouseModal();
-      renderAll();
-    }
-
-    function editWarehouse(id) { openWarehouseModal(id); }
-
-    function deleteWarehouse(id) {
-      if (appState.warehouses.length <= 1) {
-        alert("Debe conservarse al menos 1 almacén en el sistema.");
-        return;
-      }
-      if (confirm("¿Estás seguro de eliminar este almacén?")) {
-        appState.warehouses = appState.warehouses.filter(w => w.id !== id);
-        appState.products.forEach(p => { if (p.stock) delete p.stock[id]; });
         saveStateRemote();
         renderAll();
       }
