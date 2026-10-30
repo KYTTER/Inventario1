@@ -156,327 +156,447 @@
 </head>
 <body class="min-h-screen transition-colors duration-200 flex flex-col">
 
-  <!-- STICKY TOP HEADER & NAVIGATION -->
-  <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkcard/95 backdrop-blur border-b border-slate-200 dark:border-darkborder shadow-sm custom-card">
-    <div class="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-2 rounded-xl font-extrabold flex items-center justify-center shadow-md shadow-brand-500/20 custom-bg-accent">
-          <i id="header-brand-icon" data-lucide="umbrella" class="w-5 h-5"></i>
+  <!-- PANTALLA DE LOGIN (INICIO DE SESIÓN) -->
+  <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900 bg-cover bg-center" style="background-image: url('');">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
+    <div class="relative w-full max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100">
+      <div class="text-center space-y-2">
+        <div id="login-logo-container" class="mx-auto w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden">
+          <i id="login-brand-icon" data-lucide="umbrella" class="w-10 h-10 text-slate-900"></i>
         </div>
+        <h2 id="login-title" class="text-xl font-extrabold tracking-tight">StockPro Distribución</h2>
+        <p class="text-xs text-slate-400">Ingresa tus credenciales para acceder</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <h1 class="font-extrabold text-sm sm:text-base leading-none flex items-center gap-1.5">
-            <span id="header-store-name" class="truncate max-w-[150px] sm:max-w-none custom-text-main">StockPro Distribución</span>
-          </h1>
-          <p id="header-store-subtitle" class="text-[10px] custom-text-muted font-medium hidden sm:block">Control Físico y Venta de Variedades</p>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Usuario</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="login-username" required placeholder="Ingresa tu usuario" class="w-full pl-9 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Contraseña</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <div id="login-error" class="hidden p-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-xl font-bold text-center">
+          Usuario o contraseña incorrectos
+        </div>
+
+        <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-brand-500/20 transition-all custom-bg-accent">
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APLICACIÓN PRINCIPAL (OCULTA HASTA LOGIN) -->
+  <div id="app-wrapper" class="hidden min-h-screen flex flex-col">
+
+    <!-- STICKY TOP HEADER & NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkcard/95 backdrop-blur border-b border-slate-200 dark:border-darkborder shadow-sm custom-card">
+      <div class="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-2 rounded-xl font-extrabold flex items-center justify-center shadow-md shadow-brand-500/20 custom-bg-accent overflow-hidden w-9 h-9">
+            <i id="header-brand-icon" data-lucide="umbrella" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-sm sm:text-base leading-none flex items-center gap-1.5">
+              <span id="header-store-name" class="truncate max-w-[150px] sm:max-w-none custom-text-main">StockPro Distribución</span>
+            </h1>
+            <p id="header-store-subtitle" class="text-[10px] custom-text-muted font-medium hidden sm:block">Control Físico y Venta de Variedades</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <span id="sync-status-badge" class="text-[10px] bg-amber-500 text-white px-2 py-1 rounded-full flex items-center gap-1 font-bold">
+            <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Conectando...
+          </span>
+
+          <button id="btn-header-critical" onclick="setFilterAlert('critical')" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl font-extrabold text-xs flex items-center gap-1 border border-red-500/30 transition-all" title="Ver Stock Crítico">
+            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-500 animate-pulse-red"></i>
+            <span class="hidden sm:inline">Críticos:</span>
+            <span id="header-critical-count" class="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
+          </button>
+
+          <button id="btn-header-cart" onclick="switchTab('pos')" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+            <span id="header-cart-count" class="bg-brand-500 text-darkbg text-[10px] font-black px-1.5 py-0.2 rounded-full custom-bg-accent">0</span>
+          </button>
+
+          <!-- Botón de Usuario Actual / Logout -->
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-darkbg px-2 py-1 rounded-xl border border-slate-200 dark:border-darkborder text-xs font-bold">
+            <i data-lucide="user" class="w-3.5 h-3.5 text-brand-500"></i>
+            <span id="user-display-name" class="custom-text-main text-[11px]">admin</span>
+            <button onclick="handleLogout()" class="text-red-500 ml-1 p-0.5 hover:text-red-600" title="Cerrar Sesión">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5">
-        <!-- Indicador de Sincronización en Vivo -->
-        <span id="sync-status-badge" class="text-[10px] bg-amber-500 text-white px-2 py-1 rounded-full flex items-center gap-1 font-bold">
-          <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Conectando...
-        </span>
-
-        <button id="btn-header-critical" onclick="setFilterAlert('critical')" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl font-extrabold text-xs flex items-center gap-1 border border-red-500/30 transition-all" title="Ver Stock Crítico">
-          <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-500 animate-pulse-red"></i>
-          <span class="hidden sm:inline">Críticos:</span>
-          <span id="header-critical-count" class="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
-        </button>
-
-        <button id="btn-header-cart" onclick="switchTab('pos')" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all">
-          <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-          <span id="header-cart-count" class="bg-brand-500 text-darkbg text-[10px] font-black px-1.5 py-0.2 rounded-full custom-bg-accent">0</span>
-        </button>
-
-        <button id="theme-toggle-btn" onclick="toggleTheme()" class="p-1.5 rounded-xl border border-slate-200 dark:border-darkborder hover:bg-slate-100 dark:hover:bg-darkhover text-slate-600 dark:text-slate-300 transition-colors">
-          <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
-          <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- HORIZONTAL SCROLLABLE TOP MENU NAV -->
-    <div class="border-t border-slate-200/60 dark:border-darkborder/60 bg-slate-50/90 dark:bg-darkbg/90 px-2 py-1.5 overflow-x-auto no-scrollbar">
-      <div class="flex items-center gap-1.5 min-w-max">
-        <button onclick="switchTab('inventory')" id="tab-btn-inventory" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-brand-500 text-darkbg shadow-sm custom-bg-accent">
-          <i id="nav-icon-inventory" data-lucide="warehouse" class="w-3.5 h-3.5"></i> <span id="nav-lbl-inventory">Inventario</span>
-        </button>
-        <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
-          <i id="nav-icon-pos" data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> <span id="nav-lbl-pos">Punto de Venta (POS)</span>
-        </button>
-        <button onclick="switchTab('sales')" id="tab-btn-sales" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
-          <i id="nav-icon-sales" data-lucide="receipt" class="w-3.5 h-3.5"></i> <span id="nav-lbl-sales">Ventas</span>
-        </button>
-        <button onclick="switchTab('warehouses')" id="tab-btn-warehouses" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
-          <i id="nav-icon-warehouses" data-lucide="layers" class="w-3.5 h-3.5"></i> <span id="nav-lbl-warehouses">Almacenes</span>
-        </button>
-        <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
-          <i id="nav-icon-settings" data-lucide="settings" class="w-3.5 h-3.5"></i> <span id="nav-lbl-settings">Configuración</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto w-full flex-1 p-2 sm:p-4 lg:p-6">
-    
-    <!-- SECTION 1: INVENTORY -->
-    <section id="tab-inventory" class="tab-content space-y-3">
-      <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
-        <div class="relative">
-          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500 font-bold"></i>
-          <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Código, Nombre, Estante..." class="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-medium custom-card">
-          <button onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-            <i data-lucide="x" class="w-4 h-4"></i>
+      <!-- HORIZONTAL NAVIGATION -->
+      <div class="border-t border-slate-200/60 dark:border-darkborder/60 bg-slate-50/90 dark:bg-darkbg/90 px-2 py-1.5 overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-1.5 min-w-max">
+          <button onclick="switchTab('inventory')" id="tab-btn-inventory" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all bg-brand-500 text-darkbg shadow-sm custom-bg-accent">
+            <i id="nav-icon-inventory" data-lucide="warehouse" class="w-3.5 h-3.5"></i> <span id="nav-lbl-inventory">Inventario</span>
+          </button>
+          <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
+            <i id="nav-icon-pos" data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> <span id="nav-lbl-pos">Punto de Venta (POS)</span>
+          </button>
+          <button onclick="switchTab('sales')" id="tab-btn-sales" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
+            <i id="nav-icon-sales" data-lucide="receipt" class="w-3.5 h-3.5"></i> <span id="nav-lbl-sales">Ventas</span>
+          </button>
+          <button onclick="switchTab('warehouses')" id="tab-btn-warehouses" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
+            <i id="nav-icon-warehouses" data-lucide="layers" class="w-3.5 h-3.5"></i> <span id="nav-lbl-warehouses">Almacenes</span>
+          </button>
+          <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-link py-1.5 px-3 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-darkhover">
+            <i id="nav-icon-settings" data-lucide="settings" class="w-3.5 h-3.5"></i> <span id="nav-lbl-settings">Configuración</span>
           </button>
         </div>
+      </div>
+    </header>
 
-        <div class="flex flex-wrap items-center justify-between gap-1.5 text-xs">
-          <div class="flex items-center gap-1.5 flex-1 min-w-[200px]">
-            <select id="inventory-wh-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder font-bold rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500 truncate flex-1 custom-card">
-            </select>
-
-            <select id="inventory-alert-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder font-bold rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500 truncate flex-1 custom-card">
-              <option value="all">Estado: Todos</option>
-              <option value="critical">🔴 Stock Crítico</option>
-              <option value="zero_loose">🟡 0 Unid. Sueltas</option>
-              <option value="ok">🟢 Stock Normal</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-1 shrink-0">
-            <div class="flex border border-slate-200 dark:border-darkborder rounded-xl p-0.5 bg-slate-50 dark:bg-darkbg custom-card">
-              <button onclick="setViewMode('list')" id="btn-view-list" class="p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" title="Vista Lista">
-                <i data-lucide="list" class="w-3.5 h-3.5"></i>
-              </button>
-              <button onclick="setViewMode('grid')" id="btn-view-grid" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200" title="Vista Cuadrícula">
-                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-
-            <button onclick="openProductModal()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-md shadow-brand-500/20 custom-bg-accent">
-              <i data-lucide="plus" class="w-4 h-4"></i> <span>Nuevo</span>
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full flex-1 p-2 sm:p-4 lg:p-6">
+      
+      <!-- SECTION 1: INVENTORY -->
+      <section id="tab-inventory" class="tab-content space-y-3">
+        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500 font-bold"></i>
+            <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Código, Nombre, Estante..." class="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-medium custom-card">
+            <button onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="x" class="w-4 h-4"></i>
             </button>
           </div>
-        </div>
-      </div>
 
-      <div id="inventory-render-container"></div>
+          <div class="flex flex-wrap items-center justify-between gap-1.5 text-xs">
+            <div class="flex items-center gap-1.5 flex-1 min-w-[200px]">
+              <select id="inventory-wh-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder font-bold rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500 truncate flex-1 custom-card">
+              </select>
 
-      <div id="inventory-pagination" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card"></div>
-    </section>
-
-    <!-- SECTION 2: POS -->
-    <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <div class="lg:col-span-7 space-y-3">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="font-bold text-xs sm:text-sm flex items-center gap-1.5">
-              <i data-lucide="grid" class="w-4 h-4 text-brand-500"></i> Catálogo para Venta
-            </h2>
-
-            <div class="flex items-center gap-2">
-              <div class="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-xl">
-                <i data-lucide="crown" class="w-3.5 h-3.5 text-vip-500"></i>
-                <label for="pos-vip-toggle" class="text-[10px] font-black text-purple-600 dark:text-purple-400 cursor-pointer">CLIENTE VIP (PRECIOS JEFA)</label>
-                <input type="checkbox" id="pos-vip-toggle" onchange="toggleVipMode()" class="w-4 h-4 rounded text-vip-600 focus:ring-vip-500 cursor-pointer">
-              </div>
-
-              <select id="pos-warehouse-select" onchange="renderPOSCatalog()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder text-xs font-bold px-2 py-1 rounded-lg custom-card">
+              <select id="inventory-alert-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder font-bold rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500 truncate flex-1 custom-card">
+                <option value="all">Estado: Todos</option>
+                <option value="critical">🔴 Stock Crítico</option>
+                <option value="zero_loose">🟡 0 Unid. Sueltas</option>
+                <option value="ok">🟢 Stock Normal</option>
               </select>
             </div>
-          </div>
 
-          <div class="relative">
-            <i data-lucide="scan" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
-            <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Buscar por Nombre o Código..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 custom-card">
+            <div class="flex items-center gap-1 shrink-0">
+              <div class="flex border border-slate-200 dark:border-darkborder rounded-xl p-0.5 bg-slate-50 dark:bg-darkbg custom-card">
+                <button onclick="setViewMode('list')" id="btn-view-list" class="p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" title="Vista Lista">
+                  <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="setViewMode('grid')" id="btn-view-grid" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200" title="Vista Cuadrícula">
+                  <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <button onclick="openProductModal()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-md shadow-brand-500/20 custom-bg-accent">
+                <i data-lucide="plus" class="w-4 h-4"></i> <span>Nuevo</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div id="pos-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[500px] overflow-y-auto pr-1"></div>
-      </div>
+        <div id="inventory-render-container"></div>
 
-      <div class="lg:col-span-5 space-y-3">
-        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3.5 rounded-2xl shadow-lg flex flex-col justify-between min-h-[480px] custom-card">
-          <div>
-            <div class="flex items-center justify-between border-b border-slate-200 dark:border-darkborder pb-2 mb-2">
-              <h2 class="font-bold text-sm flex items-center gap-1.5">
-                <i data-lucide="shopping-cart" class="w-4 h-4 text-brand-500"></i> Carrito
-                <span id="pos-cart-vip-badge" class="hidden text-[9px] bg-vip-600 text-white font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <i data-lucide="crown" class="w-2.5 h-2.5"></i> TARIFA VIP
-                </span>
+        <div id="inventory-pagination" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card"></div>
+      </section>
+
+      <!-- SECTION 2: POS -->
+      <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-7 space-y-3">
+          <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h2 class="font-bold text-xs sm:text-sm flex items-center gap-1.5">
+                <i data-lucide="grid" class="w-4 h-4 text-brand-500"></i> Catálogo para Venta
               </h2>
-              <button onclick="clearCart()" class="text-xs text-red-500 font-bold flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Vaciar
+
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-xl">
+                  <i data-lucide="crown" class="w-3.5 h-3.5 text-vip-500"></i>
+                  <label for="pos-vip-toggle" class="text-[10px] font-black text-purple-600 dark:text-purple-400 cursor-pointer uppercase">CLIENTE VIP</label>
+                  <input type="checkbox" id="pos-vip-toggle" onchange="toggleVipMode()" class="w-4 h-4 rounded text-vip-600 focus:ring-vip-500 cursor-pointer">
+                </div>
+
+                <select id="pos-warehouse-select" onchange="renderPOSCatalog()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder text-xs font-bold px-2 py-1 rounded-lg custom-card">
+                </select>
+              </div>
+            </div>
+
+            <div class="relative">
+              <i data-lucide="scan" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
+              <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Buscar por Nombre o Código..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 custom-card">
+            </div>
+          </div>
+
+          <div id="pos-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[500px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-3">
+          <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3.5 rounded-2xl shadow-lg flex flex-col justify-between min-h-[480px] custom-card">
+            <div>
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-darkborder pb-2 mb-2">
+                <h2 class="font-bold text-sm flex items-center gap-1.5">
+                  <i data-lucide="shopping-cart" class="w-4 h-4 text-brand-500"></i> Carrito
+                  <span id="pos-cart-vip-badge" class="hidden text-[9px] bg-vip-600 text-white font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <i data-lucide="crown" class="w-2.5 h-2.5"></i> TARIFA VIP
+                  </span>
+                </h2>
+                <button onclick="clearCart()" class="text-xs text-red-500 font-bold flex items-center gap-1">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Vaciar
+                </button>
+              </div>
+
+              <div id="cart-items-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+
+              <div class="mt-3 pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
+                <h3 class="font-bold text-[10px] uppercase tracking-wider custom-text-muted">Datos Cliente</h3>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <input type="text" id="cust-name" placeholder="Cliente" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-doc" placeholder="DNI/RIF" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-phone" placeholder="WhatsApp" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-address" placeholder="Dirección" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 border-t border-slate-200 dark:border-darkborder pt-3 space-y-2">
+              <div class="flex justify-between text-xs font-semibold custom-text-muted">
+                <span>Total de Artículos:</span>
+                <span id="cart-summary-qty" class="font-bold custom-text-main">0 un.</span>
+              </div>
+              <div class="flex justify-between text-base font-black custom-text-main">
+                <span>TOTAL GENERAL:</span>
+                <span id="cart-summary-total" class="text-brand-500">$0.00</span>
+              </div>
+
+              <button onclick="processSale()" id="process-sale-btn" disabled class="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-darkbg font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 custom-bg-accent">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> Procesar Venta / Nota
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: SALES -->
+      <section id="tab-sales" class="tab-content hidden space-y-3">
+        <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-3 custom-card">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="font-extrabold text-sm flex items-center gap-2">
+              <i data-lucide="receipt" class="w-4 h-4 text-brand-500"></i> Historial de Ventas y Notas de Entrega
+            </h2>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="filterSalesToday()" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold px-2.5 py-1 rounded-xl text-xs border border-brand-500/30">Hoy</button>
+              <button onclick="renderSalesHistory()" class="bg-slate-100 dark:bg-darkbg text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded-xl text-xs border border-slate-200 dark:border-darkborder">Ver Todas</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div>
+              <label class="block text-[10px] font-semibold custom-text-muted mb-0.5">Desde Fecha:</label>
+              <input type="date" id="sales-date-from" onchange="renderSalesHistory()" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-1.5 rounded-xl font-medium custom-card">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold custom-text-muted mb-0.5">Hasta Fecha:</label>
+              <input type="date" id="sales-date-to" onchange="renderSalesHistory()" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-1.5 rounded-xl font-medium custom-card">
+            </div>
+            <div class="col-span-2 sm:col-span-2 flex items-end">
+              <div class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-3 py-1.5 rounded-xl flex items-center justify-between font-extrabold text-xs custom-card">
+                <span class="custom-text-muted">Total Filtrado:</span>
+                <span id="sales-sum-total" class="text-brand-500">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="sales-list-container" class="space-y-2"></div>
+      </section>
+
+      <!-- SECTION 4: WAREHOUSES -->
+      <section id="tab-warehouses" class="tab-content hidden space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-extrabold text-base">Almacenes y Depósitos</h2>
+          <button onclick="openWarehouseModal()" class="bg-brand-500 text-darkbg font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-md custom-bg-accent">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Crear Almacén
+          </button>
+        </div>
+        <div id="warehouses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </section>
+
+      <!-- SECTION 5: SETTINGS & USERS -->
+      <section id="tab-settings" class="tab-content hidden space-y-3">
+        <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-4 rounded-2xl shadow-sm space-y-4 custom-card">
+          <h2 class="font-bold text-base border-b border-slate-200 dark:border-darkborder pb-2 flex items-center gap-2">
+            <i data-lucide="settings" class="w-4 h-4 text-brand-500"></i> Personalización de Empresa, Usuarios y Fondo
+          </h2>
+
+          <!-- GESTIÓN DE USUARIOS Y CLAVES -->
+          <div class="p-3 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl space-y-3 custom-card">
+            <div class="flex items-center justify-between">
+              <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5">
+                <i data-lucide="users" class="w-4 h-4"></i> Control de Usuarios y Contraseñas
+              </h3>
+              <button onclick="openUserModal()" class="bg-brand-500 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase custom-bg-accent">
+                + Crear Usuario
               </button>
             </div>
 
-            <div id="cart-items-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
-
-            <div class="mt-3 pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
-              <h3 class="font-bold text-[10px] uppercase tracking-wider custom-text-muted">Datos Cliente</h3>
-              <div class="grid grid-cols-2 gap-1.5">
-                <input type="text" id="cust-name" placeholder="Cliente" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
-                <input type="text" id="cust-doc" placeholder="DNI/RIF" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
-                <input type="text" id="cust-phone" placeholder="WhatsApp" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
-                <input type="text" id="cust-address" placeholder="Dirección" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-2 py-1 rounded-lg text-xs custom-card">
-              </div>
-            </div>
+            <div id="users-list-container" class="space-y-1.5"></div>
           </div>
 
-          <div class="mt-4 border-t border-slate-200 dark:border-darkborder pt-3 space-y-2">
-            <div class="flex justify-between text-xs font-semibold custom-text-muted">
-              <span>Total de Artículos:</span>
-              <span id="cart-summary-qty" class="font-bold custom-text-main">0 un.</span>
-            </div>
-            <div class="flex justify-between text-base font-black custom-text-main">
-              <span>TOTAL GENERAL:</span>
-              <span id="cart-summary-total" class="text-brand-500">$0.00</span>
+          <form id="settings-form" onsubmit="saveSettings(event)" class="space-y-3 text-xs">
+            <!-- Logo & Background Upload Section -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div class="p-2.5 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card space-y-1.5">
+                <label class="block font-bold text-[11px]">Logo Principal (Login y Header)</label>
+                <div class="flex items-center gap-2">
+                  <div id="store-logo-preview" class="w-10 h-10 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder flex items-center justify-center overflow-hidden shrink-0 custom-card">
+                    <i data-lucide="image" class="w-5 h-5 text-slate-400"></i>
+                  </div>
+                  <input type="file" id="store-logo-input" accept="image/*" onchange="previewStoreLogo(event)" class="text-[10px] text-slate-500">
+                </div>
+              </div>
+
+              <div class="p-2.5 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card space-y-1.5">
+                <label class="block font-bold text-[11px]">Fondo Pantalla Login</label>
+                <div class="flex items-center gap-2">
+                  <div id="login-bg-preview" class="w-10 h-10 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder flex items-center justify-center overflow-hidden shrink-0 custom-card">
+                    <i data-lucide="image" class="w-5 h-5 text-slate-400"></i>
+                  </div>
+                  <input type="file" id="login-bg-input" accept="image/*" onchange="previewLoginBg(event)" class="text-[10px] text-slate-500">
+                </div>
+              </div>
             </div>
 
-            <button onclick="processSale()" id="process-sale-btn" disabled class="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-darkbg font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 custom-bg-accent">
-              <i data-lucide="check-circle" class="w-4 h-4"></i> Procesar Venta / Nota
-            </button>
+            <div class="space-y-2">
+              <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-slate-400">Datos de la Empresa y Dirección</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-semibold mb-1">Nombre Comercial</label>
+                  <input type="text" id="set-store-name" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">RIF / DNI / RUC</label>
+                  <input type="text" id="set-store-doc" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-semibold mb-1">Teléfono Principal</label>
+                  <input type="text" id="set-store-phone" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+                </div>
+                <div>
+                  <label class="block font-semibold mb-1">Símbolo Moneda ($ / S/ / €)</label>
+                  <input type="text" id="set-store-currency" value="$" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold mb-1">Dirección Física de la Tienda / Galpón</label>
+                <input type="text" id="set-store-address" placeholder="Ej: Av. Principal Local 5" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+              </div>
+
+              <div>
+                <label class="block font-semibold mb-1">Subtítulo / Eslogan</label>
+                <input type="text" id="set-store-subtitle" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
+              <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-brand-500 flex items-center gap-1">
+                <i data-lucide="palette" class="w-3.5 h-3.5"></i> Personalización de Colores del Tema
+              </h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
+                  <label class="block font-semibold text-[10px] mb-1">Fondo de App</label>
+                  <input type="color" id="set-color-app-bg" value="#0f172a" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
+                </div>
+
+                <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
+                  <label class="block font-semibold text-[10px] mb-1">Fondo Paneles</label>
+                  <input type="color" id="set-color-card-bg" value="#1e293b" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
+                </div>
+
+                <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
+                  <label class="block font-semibold text-[10px] mb-1">Texto Principal</label>
+                  <input type="color" id="set-color-text-main" value="#f8fafc" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
+                </div>
+
+                <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
+                  <label class="block font-semibold text-[10px] mb-1">Texto Secundario</label>
+                  <input type="color" id="set-color-text-muted" value="#94a3b8" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
+                </div>
+
+                <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
+                  <label class="block font-semibold text-[10px] mb-1">Color Acento/Botones</label>
+                  <input type="color" id="set-color-accent" value="#eab308" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
+                </div>
+
+                <div class="flex items-end">
+                  <button type="button" onclick="resetThemeColors()" class="w-full bg-slate-100 dark:bg-darkbg text-slate-600 dark:text-slate-300 font-bold py-2 px-2 rounded-xl text-[10px] border border-slate-200 dark:border-darkborder">Restaurar Colores</button>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="bg-brand-500 text-darkbg font-bold px-4 py-2 rounded-xl text-xs uppercase shadow custom-bg-accent">Guardar Configuración</button>
+          </form>
+
+          <div class="pt-3 border-t border-slate-200 dark:border-darkborder flex items-center justify-between text-xs">
+            <button onclick="exportData()" class="custom-text-muted font-semibold flex items-center gap-1"><i data-lucide="download" class="w-3.5 h-3.5"></i> Respaldo JSON</button>
+            <button onclick="resetData()" class="text-red-500 font-semibold flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Restaurar</button>
           </div>
         </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR USUARIO -->
+  <div id="user-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-sm rounded-2xl shadow-2xl p-4 space-y-3 custom-card">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-darkborder pb-2">
+        <h3 id="user-modal-title" class="font-extrabold text-sm">Crear Nuevo Usuario</h3>
+        <button onclick="closeUserModal()" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
-    </section>
 
-    <!-- SECTION 3: SALES -->
-    <section id="tab-sales" class="tab-content hidden space-y-3">
-      <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-3 custom-card">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="font-extrabold text-sm flex items-center gap-2">
-            <i data-lucide="receipt" class="w-4 h-4 text-brand-500"></i> Historial de Ventas y Notas de Entrega
-          </h2>
-
-          <div class="flex items-center gap-1.5">
-            <button onclick="filterSalesToday()" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold px-2.5 py-1 rounded-xl text-xs border border-brand-500/30">Hoy</button>
-            <button onclick="renderSalesHistory()" class="bg-slate-100 dark:bg-darkbg text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded-xl text-xs border border-slate-200 dark:border-darkborder">Ver Todas</button>
-          </div>
+      <form id="user-form" onsubmit="saveUser(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="user-id">
+        <div>
+          <label class="block font-semibold mb-1">Nombre de Usuario *</label>
+          <input type="text" id="user-username" required placeholder="Ej: vendedor1" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs custom-card">
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div>
-            <label class="block text-[10px] font-semibold custom-text-muted mb-0.5">Desde Fecha:</label>
-            <input type="date" id="sales-date-from" onchange="renderSalesHistory()" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-1.5 rounded-xl font-medium custom-card">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold custom-text-muted mb-0.5">Hasta Fecha:</label>
-            <input type="date" id="sales-date-to" onchange="renderSalesHistory()" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-1.5 rounded-xl font-medium custom-card">
-          </div>
-          <div class="col-span-2 sm:col-span-2 flex items-end">
-            <div class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder px-3 py-1.5 rounded-xl flex items-center justify-between font-extrabold text-xs custom-card">
-              <span class="custom-text-muted">Total Filtrado:</span>
-              <span id="sales-sum-total" class="text-brand-500">$0.00</span>
-            </div>
-          </div>
+        <div>
+          <label class="block font-semibold mb-1">Contraseña *</label>
+          <input type="text" id="user-password" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs custom-card font-mono">
         </div>
-      </div>
 
-      <div id="sales-list-container" class="space-y-2"></div>
-    </section>
-
-    <!-- SECTION 4: WAREHOUSES -->
-    <section id="tab-warehouses" class="tab-content hidden space-y-3">
-      <div class="flex items-center justify-between">
-        <h2 class="font-extrabold text-base">Almacenes y Depósitos</h2>
-        <button onclick="openWarehouseModal()" class="bg-brand-500 text-darkbg font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow-md custom-bg-accent">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Crear Almacén
-        </button>
-      </div>
-      <div id="warehouses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-    </section>
-
-    <!-- SECTION 5: SETTINGS -->
-    <section id="tab-settings" class="tab-content hidden space-y-3">
-      <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-4 rounded-2xl shadow-sm space-y-4 custom-card">
-        <h2 class="font-bold text-base border-b border-slate-200 dark:border-darkborder pb-2 flex items-center gap-2">
-          <i data-lucide="settings" class="w-4 h-4 text-brand-500"></i> Personalización de Empresa, Pantallas y Colores
-        </h2>
-
-        <form id="settings-form" onsubmit="saveSettings(event)" class="space-y-3 text-xs">
-          <div class="space-y-2">
-            <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-slate-400">Datos de la Empresa y Dirección</h3>
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block font-semibold mb-1">Nombre Comercial</label>
-                <input type="text" id="set-store-name" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
-              </div>
-              <div>
-                <label class="block font-semibold mb-1">RIF / DNI / RUC</label>
-                <input type="text" id="set-store-doc" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block font-semibold mb-1">Teléfono Principal</label>
-                <input type="text" id="set-store-phone" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
-              </div>
-              <div>
-                <label class="block font-semibold mb-1">Símbolo Moneda ($ / S/ / €)</label>
-                <input type="text" id="set-store-currency" value="$" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
-              </div>
-            </div>
-
-            <div>
-              <label class="block font-semibold mb-1">Dirección Física de la Tienda / Galpón</label>
-              <input type="text" id="set-store-address" placeholder="Ej: Av. Principal Local 5" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
-            </div>
-
-            <div>
-              <label class="block font-semibold mb-1">Subtítulo / Eslogan</label>
-              <input type="text" id="set-store-subtitle" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
-            </div>
-          </div>
-
-          <div class="pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
-            <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-brand-500 flex items-center gap-1">
-              <i data-lucide="palette" class="w-3.5 h-3.5"></i> Personalización de Colores del Tema
-            </h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
-                <label class="block font-semibold text-[10px] mb-1">Fondo de App</label>
-                <input type="color" id="set-color-app-bg" value="#0f172a" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
-              </div>
-
-              <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
-                <label class="block font-semibold text-[10px] mb-1">Fondo Paneles</label>
-                <input type="color" id="set-color-card-bg" value="#1e293b" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
-              </div>
-
-              <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
-                <label class="block font-semibold text-[10px] mb-1">Texto Principal</label>
-                <input type="color" id="set-color-text-main" value="#f8fafc" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
-              </div>
-
-              <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
-                <label class="block font-semibold text-[10px] mb-1">Texto Secundario</label>
-                <input type="color" id="set-color-text-muted" value="#94a3b8" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
-              </div>
-
-              <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
-                <label class="block font-semibold text-[10px] mb-1">Color Acento/Botones</label>
-                <input type="color" id="set-color-accent" value="#eab308" class="w-full h-8 cursor-pointer rounded-lg border-0 bg-transparent">
-              </div>
-
-              <div class="flex items-end">
-                <button type="button" onclick="resetThemeColors()" class="w-full bg-slate-100 dark:bg-darkbg text-slate-600 dark:text-slate-300 font-bold py-2 px-2 rounded-xl text-[10px] border border-slate-200 dark:border-darkborder">Restaurar Colores</button>
-              </div>
-            </div>
-          </div>
-
-          <button type="submit" class="bg-brand-500 text-darkbg font-bold px-4 py-2 rounded-xl text-xs uppercase shadow custom-bg-accent">Guardar Configuración</button>
-        </form>
-
-        <div class="pt-3 border-t border-slate-200 dark:border-darkborder flex items-center justify-between text-xs">
-          <button onclick="exportData()" class="custom-text-muted font-semibold flex items-center gap-1"><i data-lucide="download" class="w-3.5 h-3.5"></i> Respaldo JSON</button>
-          <button onclick="resetData()" class="text-red-500 font-semibold flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Restaurar</button>
+        <div>
+          <label class="block font-semibold mb-1">Rol / Permisos *</label>
+          <select id="user-role" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs custom-card font-bold">
+            <option value="admin">Administrador (Acceso Total)</option>
+            <option value="seller">Vendedor (Sin Eliminar ni Ajustes)</option>
+          </select>
         </div>
-      </div>
-    </section>
-  </main>
+
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="closeUserModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-darkbg font-semibold text-xs custom-card">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 text-darkbg font-bold text-xs shadow custom-bg-accent">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL: PRODUCTO -->
   <div id="product-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
@@ -544,26 +664,6 @@
           </div>
         </div>
 
-        <div class="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-          <h4 class="font-bold text-[11px] uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1.5 flex items-center gap-1">
-            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Tarifas VIP (Precios Jefa)
-          </h4>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block font-semibold text-[10px] text-purple-500">P. Detal VIP</label>
-              <input type="number" step="0.01" id="prod-price-vip-detal" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 custom-card">
-            </div>
-            <div>
-              <label class="block font-semibold text-[10px] text-purple-500">P. Mayor VIP</label>
-              <input type="number" step="0.01" id="prod-price-vip-mayor" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 custom-card">
-            </div>
-            <div>
-              <label class="block font-semibold text-[10px] text-purple-500">P. Caja VIP</label>
-              <input type="number" step="0.01" id="prod-price-vip-caja" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 custom-card">
-            </div>
-          </div>
-        </div>
-
         <div>
           <h4 class="font-bold text-[11px] uppercase tracking-wider text-brand-500 mb-1.5 flex items-center gap-1">
             <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Ubicación y Stock por Almacén
@@ -574,6 +674,37 @@
         <div class="pt-2 border-t border-slate-200 dark:border-darkborder flex items-center justify-end gap-2">
           <button type="button" onclick="closeProductModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-darkbg font-semibold text-xs custom-card">Cancelar</button>
           <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-darkbg font-bold text-xs uppercase shadow custom-bg-accent">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR VENTA REGISTRADA -->
+  <div id="edit-sale-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+    <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl shadow-2xl p-4 space-y-3 custom-card">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-darkborder pb-2">
+        <h3 class="font-extrabold text-sm flex items-center gap-1.5"><i data-lucide="edit-3" class="w-4 h-4 text-brand-500"></i> Editar Datos de Venta</h3>
+        <button onclick="closeEditSaleModal()" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form id="edit-sale-form" onsubmit="saveEditedSale(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="edit-sale-id">
+        <div>
+          <label class="block font-semibold mb-1">Nombre del Cliente</label>
+          <input type="text" id="edit-sale-cust-name" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs custom-card">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Documento / DNI / RIF</label>
+          <input type="text" id="edit-sale-cust-doc" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs custom-card">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Monto Total Recaudado ($)</label>
+          <input type="number" step="0.01" id="edit-sale-total" required class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs custom-card font-bold text-brand-500">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="closeEditSaleModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-darkbg font-semibold text-xs custom-card">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 text-darkbg font-bold text-xs shadow custom-bg-accent">Guardar Cambios</button>
         </div>
       </form>
     </div>
@@ -602,11 +733,14 @@
     </div>
   </div>
 
-  <!-- MODAL: NOTA DE ENTREGA -->
+  <!-- MODAL: NOTA DE ENTREGA / TICKET CON LOGO -->
   <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white text-slate-900 border border-slate-200 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       <div id="print-area" class="p-5 overflow-y-auto space-y-3 text-xs">
-        <div class="text-center border-b pb-2 space-y-0.5">
+        <div class="text-center border-b pb-2 space-y-1">
+          <div id="receipt-logo-container" class="flex justify-center hidden">
+            <img id="receipt-logo-img" src="" class="h-12 w-auto object-contain">
+          </div>
           <h2 id="receipt-store-name" class="font-black text-base uppercase">MI ALMACÉN</h2>
           <p id="receipt-store-doc" class="text-[10px] text-slate-500">RIF: J-00000000-0</p>
           <p id="receipt-store-phone" class="text-[10px] text-slate-500">Tel: +58 000 0000000</p>
@@ -653,8 +787,10 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT APP LOGIC CON FIREBASE EN VIVO -->
+  <!-- JAVASCRIPT LOGIC -->
   <script>
+    let currentUser = null;
+
     let appState = {
       theme: 'dark',
       viewMode: 'list',
@@ -669,9 +805,11 @@
         accent: "#eab308"
       },
       settings: {
-        storeName: "Distribuidora & Almacén Comercial",
+        storeName: "StockPro Distribución",
         storeSubtitle: "Control Físico y Venta de Variedades",
         brandIcon: "umbrella",
+        logo: null,
+        loginBg: null,
         doc: "J-40982112-9",
         phone: "+58 412 9988776",
         address: "Av. Principal Galpón 4, Zona Comercial",
@@ -684,6 +822,10 @@
           settings: "Configuración"
         }
       },
+      users: [
+        { id: "u_1", username: "admin", password: "leon", role: "admin" },
+        { id: "u_2", username: "administrador", password: "12345", role: "admin" }
+      ],
       warehouses: [
         { id: "wh_1", name: "Almacén Principal" },
         { id: "wh_2", name: "Depósito Secundario" },
@@ -701,7 +843,6 @@
       lucide.createIcons();
     });
 
-    // ESCUCHAR FIREBASE EN TIEMPO REAL
     window.addEventListener('firebase-ready', () => {
       const badge = document.getElementById('sync-status-badge');
       if (badge) {
@@ -710,26 +851,26 @@
         lucide.createIcons();
       }
 
-      // Sincronizar Configuración / Estado Global
       window.onSnapshot(window.doc(window.db, "app_data", "main_state"), (docSnap) => {
         if (docSnap.exists()) {
           const remoteData = docSnap.data();
           if (remoteData.settings) appState.settings = remoteData.settings;
           if (remoteData.warehouses) appState.warehouses = remoteData.warehouses;
           if (remoteData.colors) appState.colors = remoteData.colors;
+          if (remoteData.users) appState.users = remoteData.users;
           applyCustomColors();
+          updateLoginScreenVisuals();
         } else {
-          // Inicializar estado remoto si no existe
           window.setDoc(window.doc(window.db, "app_data", "main_state"), {
             settings: appState.settings,
             warehouses: appState.warehouses,
-            colors: appState.colors
+            colors: appState.colors,
+            users: appState.users
           });
         }
         renderAll();
       });
 
-      // Sincronizar Productos en tiempo real
       window.onSnapshot(window.collection(window.db, "products"), (snapshot) => {
         appState.products = [];
         snapshot.forEach((doc) => {
@@ -738,7 +879,6 @@
         renderAll();
       });
 
-      // Sincronizar Ventas en tiempo real
       window.onSnapshot(window.collection(window.db, "sales"), (snapshot) => {
         appState.salesHistory = [];
         snapshot.forEach((doc) => {
@@ -748,11 +888,68 @@
       });
     });
 
+    // SISTEMA DE INICIO DE SESIÓN (LOGIN)
+    function handleLogin(e) {
+      e.preventDefault();
+      const userVal = document.getElementById('login-username').value.trim().toLowerCase();
+      const passVal = document.getElementById('login-password').value.trim();
+      const errorEl = document.getElementById('login-error');
+
+      const foundUser = appState.users.find(u => u.username.toLowerCase() === userVal && u.password === passVal);
+
+      if (foundUser) {
+        currentUser = foundUser;
+        errorEl.classList.add('hidden');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app-wrapper').classList.remove('hidden');
+        document.getElementById('user-display-name').textContent = currentUser.username;
+        
+        applyRolePermissions();
+        renderAll();
+      } else {
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById('login-password').value = '';
+      document.getElementById('app-wrapper').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    function applyRolePermissions() {
+      const tabSettingsBtn = document.getElementById('tab-btn-settings');
+      if (currentUser && currentUser.role === 'seller') {
+        if (tabSettingsBtn) tabSettingsBtn.classList.add('hidden');
+        switchTab('inventory');
+      } else {
+        if (tabSettingsBtn) tabSettingsBtn.classList.remove('hidden');
+      }
+    }
+
+    function updateLoginScreenVisuals() {
+      const loginScreen = document.getElementById('login-screen');
+      const loginTitle = document.getElementById('login-title');
+      const logoContainer = document.getElementById('login-logo-container');
+
+      if (appState.settings.loginBg) {
+        loginScreen.style.backgroundImage = `url('${appState.settings.loginBg}')`;
+      }
+      if (appState.settings.storeName) {
+        loginTitle.textContent = appState.settings.storeName;
+      }
+      if (appState.settings.logo) {
+        logoContainer.innerHTML = `<img src="${appState.settings.logo}" class="w-full h-full object-cover">`;
+      }
+    }
+
     function saveStateRemote() {
       window.setDoc(window.doc(window.db, "app_data", "main_state"), {
         settings: appState.settings,
         warehouses: appState.warehouses,
-        colors: appState.colors
+        colors: appState.colors,
+        users: appState.users
       }).catch(err => console.error("Error al sincronizar estado:", err));
     }
 
@@ -817,6 +1014,10 @@
     }
 
     function switchTab(tabId) {
+      if (currentUser && currentUser.role === 'seller' && tabId === 'settings') {
+        alert("Acceso denegado: Solo administradores pueden entrar a Configuración.");
+        return;
+      }
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       const activeContent = document.getElementById(`tab-${tabId}`);
       if (activeContent) activeContent.classList.remove('hidden');
@@ -842,13 +1043,19 @@
       renderSalesHistory();
       renderWarehouses();
       renderSettingsForm();
+      renderUsersList();
     }
 
     function renderHeaderAndCustomization() {
       document.getElementById('header-store-name').textContent = appState.settings.storeName;
       document.getElementById('header-store-subtitle').textContent = appState.settings.storeSubtitle || "Control de Stock";
-      const brandIconEl = document.getElementById('header-brand-icon');
-      if (brandIconEl) brandIconEl.setAttribute('data-lucide', appState.settings.brandIcon || 'umbrella');
+      
+      const brandIconBg = document.getElementById('header-brand-icon-bg');
+      if (appState.settings.logo) {
+        brandIconBg.innerHTML = `<img src="${appState.settings.logo}" class="w-full h-full object-cover">`;
+      } else {
+        brandIconBg.innerHTML = `<i id="header-brand-icon" data-lucide="${appState.settings.brandIcon || 'umbrella'}" class="w-5 h-5"></i>`;
+      }
 
       const labels = appState.settings.labels || {};
       if (labels.inventory) document.getElementById('nav-lbl-inventory').textContent = labels.inventory;
@@ -974,7 +1181,7 @@
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                   <button onclick="editProduct('${prod.id}')" class="text-slate-400 hover:text-brand-500 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                  <button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
                 </div>
               </div>
               <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl">${whStockRowsHtml}</div>
@@ -992,7 +1199,7 @@
                 <div class="flex flex-wrap gap-1">${prodCodesArr.map(c => `<span class="font-mono font-bold text-[9px] text-brand-500 bg-brand-500/10 px-1.5 py-0.5 rounded">${c}</span>`).join('')}</div>
                 <div class="flex items-center gap-1">
                   <button onclick="editProduct('${prod.id}')" class="text-slate-400 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                  <button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
                 </div>
               </div>
               <h3 class="font-extrabold text-xs truncate custom-text-main">${prod.name}</h3>
@@ -1038,6 +1245,30 @@
       }
     }
 
+    function previewStoreLogo(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById('store-logo-preview').innerHTML = `<img src="${evt.target.result}" class="w-full h-full object-contain">`;
+          document.getElementById('store-logo-preview').dataset.base64 = evt.target.result;
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function previewLoginBg(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById('login-bg-preview').innerHTML = `<img src="${evt.target.result}" class="w-full h-full object-cover">`;
+          document.getElementById('login-bg-preview').dataset.base64 = evt.target.result;
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
     function renderPOSCatalog() {
       const search = document.getElementById('pos-search').value.toLowerCase().trim();
       const whSelect = document.getElementById('pos-warehouse-select');
@@ -1064,7 +1295,7 @@
       filtered.forEach(prod => {
         const st = prod.stock && prod.stock[selectedWhId] ? prod.stock[selectedWhId] : { boxes: 0, loose: 0, rack: 'A-01' };
         const totalUnitsAvailable = (st.boxes * (prod.boxUnits || 1)) + st.loose;
-        const currentDetalPrice = appState.isVipActive ? (prod.prices?.vipDetal !== undefined ? prod.prices.vipDetal : prod.prices?.detal) : prod.prices?.detal;
+        const currentDetalPrice = prod.prices?.detal;
 
         const card = document.createElement('div');
         card.className = "bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-sm custom-card";
@@ -1112,9 +1343,6 @@
         document.getElementById('prod-price-detal').value = prod.prices?.detal || 0;
         document.getElementById('prod-price-mayor').value = prod.prices?.mayor || 0;
         document.getElementById('prod-price-caja').value = prod.prices?.caja || 0;
-        document.getElementById('prod-price-vip-detal').value = prod.prices?.vipDetal || 0;
-        document.getElementById('prod-price-vip-mayor').value = prod.prices?.vipMayor || 0;
-        document.getElementById('prod-price-vip-caja').value = prod.prices?.vipCaja || 0;
 
         if (prod.image) {
           document.getElementById('prod-img-preview').innerHTML = `<img src="${prod.image}" class="w-full h-full object-cover">`;
@@ -1166,10 +1394,7 @@
       const prices = {
         detal: parseFloat(document.getElementById('prod-price-detal').value) || 0,
         mayor: parseFloat(document.getElementById('prod-price-mayor').value) || 0,
-        caja: parseFloat(document.getElementById('prod-price-caja').value) || 0,
-        vipDetal: parseFloat(document.getElementById('prod-price-vip-detal').value) || 0,
-        vipMayor: parseFloat(document.getElementById('prod-price-vip-mayor').value) || 0,
-        vipCaja: parseFloat(document.getElementById('prod-price-vip-caja').value) || 0
+        caja: parseFloat(document.getElementById('prod-price-caja').value) || 0
       };
 
       const imgPreview = document.getElementById('prod-img-preview');
@@ -1202,6 +1427,10 @@
     async function editProduct(id) { openProductModal(id); }
 
     async function deleteProduct(prodId) {
+      if (currentUser && currentUser.role !== 'admin') {
+        alert("Acceso restringido: Solo administradores pueden eliminar productos.");
+        return;
+      }
       if (confirm("¿Estás seguro de eliminar este producto?")) {
         try {
           await window.deleteDoc(window.doc(window.db, "products", prodId));
@@ -1215,7 +1444,7 @@
     function addToCart(prodId) {
       const prod = appState.products.find(p => p.id === prodId);
       if (!prod) return;
-      const defaultPrice = appState.isVipActive ? (prod.prices?.vipDetal || prod.prices?.detal || 0) : (prod.prices?.detal || 0);
+      const defaultPrice = prod.prices?.detal || 0;
       const existing = appState.cart.find(i => i.productId === prodId && i.priceType === 'detal');
       if (existing) {
         existing.qty++;
@@ -1337,7 +1566,6 @@
         }
         totalCalcAmount += (uPrice * item.qty);
 
-        // Actualizar stock remoto en Firebase
         await window.updateDoc(window.doc(window.db, "products", prod.id), { stock: prod.stock });
       }
 
@@ -1352,6 +1580,7 @@
         warehouseId: whId,
         warehouseName: whName,
         isVip: appState.isVipActive,
+        seller: currentUser ? currentUser.username : 'desconocido',
         customer: { name: custName, doc: custDoc, phone: custPhone },
         items: JSON.parse(JSON.stringify(appState.cart)),
         totalAmount: totalCalcAmount,
@@ -1418,13 +1647,14 @@
               <span class="custom-text-muted text-[10px] font-mono">${sale.dateTimeStr}</span>
             </div>
             <div class="flex items-center gap-1">
-              <button onclick="reopenSaleReceipt('${sale.id}')" class="text-slate-400 hover:text-brand-500 p-1"><i data-lucide="printer" class="w-4 h-4"></i></button>
-              <button onclick="deleteSaleRecord('${sale.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button onclick="openEditSaleModal('${sale.id}')" class="text-slate-400 hover:text-blue-500 p-1" title="Editar Venta"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+              <button onclick="reopenSaleReceipt('${sale.id}')" class="text-slate-400 hover:text-brand-500 p-1" title="Imprimir Ticket"><i data-lucide="printer" class="w-4 h-4"></i></button>
+              ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteSaleRecord('${sale.id}')" class="text-slate-400 hover:text-red-500 p-1" title="Eliminar/Devolver"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
             </div>
           </div>
           <div class="flex items-center justify-between">
             <div>
-              <p class="font-semibold text-[11px] truncate max-w-[200px] custom-text-main">Cliente: ${sale.customer?.name}</p>
+              <p class="font-semibold text-[11px] truncate max-w-[200px] custom-text-main">Cliente: ${sale.customer?.name} ${sale.seller ? `<span class="custom-text-muted text-[9px]">(Atendido por: ${sale.seller})</span>` : ''}</p>
               <p class="text-[10px] custom-text-muted truncate max-w-[250px]">${itemsSummaryStr}</p>
             </div>
             <div class="text-right font-black text-sm text-brand-500">${appState.settings.currency}${(sale.totalAmount || 0).toFixed(2)}</div>
@@ -1436,6 +1666,43 @@
       lucide.createIcons();
     }
 
+    function openEditSaleModal(saleId) {
+      const sale = appState.salesHistory.find(s => s.id === saleId);
+      if (!sale) return;
+      document.getElementById('edit-sale-id').value = sale.id;
+      document.getElementById('edit-sale-cust-name').value = sale.customer?.name || '';
+      document.getElementById('edit-sale-cust-doc').value = sale.customer?.doc || '';
+      document.getElementById('edit-sale-total').value = sale.totalAmount || 0;
+      document.getElementById('edit-sale-modal').classList.remove('hidden');
+    }
+
+    function closeEditSaleModal() {
+      document.getElementById('edit-sale-modal').classList.add('hidden');
+    }
+
+    async function saveEditedSale(e) {
+      e.preventDefault();
+      const saleId = document.getElementById('edit-sale-id').value;
+      const sale = appState.salesHistory.find(s => s.id === saleId);
+      if (!sale) return;
+
+      const newCustName = document.getElementById('edit-sale-cust-name').value.trim();
+      const newCustDoc = document.getElementById('edit-sale-cust-doc').value.trim();
+      const newTotal = parseFloat(document.getElementById('edit-sale-total').value) || 0;
+
+      const updatedCustomer = Object.assign({}, sale.customer, { name: newCustName, doc: newCustDoc });
+
+      try {
+        await window.updateDoc(window.doc(window.db, "sales", saleId), {
+          customer: updatedCustomer,
+          totalAmount: newTotal
+        });
+        closeEditSaleModal();
+      } catch (err) {
+        alert("Error al actualizar venta: " + err);
+      }
+    }
+
     function reopenSaleReceipt(saleId) {
       const sale = appState.salesHistory.find(s => s.id === saleId);
       if (!sale) return;
@@ -1444,6 +1711,10 @@
     }
 
     async function deleteSaleRecord(saleId) {
+      if (currentUser && currentUser.role !== 'admin') {
+        alert("Acceso denegado: Vendedores no pueden eliminar ventas.");
+        return;
+      }
       const sale = appState.salesHistory.find(s => s.id === saleId);
       if (!sale) return;
       if (confirm(`¿Deseas reingresar las unidades de esta venta al stock del almacén (${sale.warehouseName})?`)) {
@@ -1470,6 +1741,16 @@
     function showReceiptModal() {
       const sale = appState.lastCompletedSale;
       if (!sale) return;
+
+      const logoContainer = document.getElementById('receipt-logo-container');
+      const logoImg = document.getElementById('receipt-logo-img');
+      if (sale.store?.logo) {
+        logoImg.src = sale.store.logo;
+        logoContainer.classList.remove('hidden');
+      } else {
+        logoContainer.classList.add('hidden');
+      }
+
       document.getElementById('receipt-store-name').textContent = sale.store.storeName;
       document.getElementById('receipt-store-doc').textContent = `RIF/DNI: ${sale.store.doc}`;
       document.getElementById('receipt-store-phone').textContent = `Tel: ${sale.store.phone}`;
@@ -1547,6 +1828,82 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
+    // GESTIÓN DE USUARIOS EN CONFIGURACIÓN
+    function renderUsersList() {
+      const container = document.getElementById('users-list-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      appState.users.forEach(u => {
+        container.innerHTML += `
+          <div class="flex items-center justify-between p-2 bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-xl text-xs custom-card">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-brand-500">${u.username}</span>
+              <span class="text-[9px] bg-slate-100 dark:bg-darkbg px-1.5 py-0.5 rounded uppercase font-bold text-slate-400">${u.role === 'admin' ? 'Administrador' : 'Vendedor'}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="font-mono text-[10px] custom-text-muted mr-1">Clave: ${u.password}</span>
+              <button onclick="editUser('${u.id}')" class="text-slate-400 hover:text-blue-500 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+              ${appState.users.length > 1 ? `<button onclick="deleteUser('${u.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+            </div>
+          </div>`;
+      });
+      lucide.createIcons();
+    }
+
+    function openUserModal(userId = null) {
+      const modal = document.getElementById('user-modal');
+      document.getElementById('user-form').reset();
+      if (userId) {
+        const u = appState.users.find(usr => usr.id === userId);
+        if (!u) return;
+        document.getElementById('user-modal-title').textContent = "Editar Usuario";
+        document.getElementById('user-id').value = u.id;
+        document.getElementById('user-username').value = u.username;
+        document.getElementById('user-password').value = u.password;
+        document.getElementById('user-role').value = u.role;
+      } else {
+        document.getElementById('user-modal-title').textContent = "Crear Nuevo Usuario";
+        document.getElementById('user-id').value = '';
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeUserModal() { document.getElementById('user-modal').classList.add('hidden'); }
+
+    function saveUser(e) {
+      e.preventDefault();
+      const id = document.getElementById('user-id').value || `u_${Date.now()}`;
+      const username = document.getElementById('user-username').value.trim();
+      const password = document.getElementById('user-password').value.trim();
+      const role = document.getElementById('user-role').value;
+
+      const existingIndex = appState.users.findIndex(u => u.id === id);
+      if (existingIndex >= 0) {
+        appState.users[existingIndex] = { id, username, password, role };
+      } else {
+        appState.users.push({ id, username, password, role });
+      }
+
+      saveStateRemote();
+      closeUserModal();
+      renderAll();
+    }
+
+    function editUser(id) { openUserModal(id); }
+
+    function deleteUser(id) {
+      if (appState.users.length <= 1) {
+        alert("Debe existir al menos 1 usuario en el sistema.");
+        return;
+      }
+      if (confirm("¿Estás seguro de eliminar este usuario?")) {
+        appState.users = appState.users.filter(u => u.id !== id);
+        saveStateRemote();
+        renderAll();
+      }
+    }
+
     function renderWarehouses() {
       const grid = document.getElementById('warehouses-grid');
       grid.innerHTML = '';
@@ -1556,7 +1913,7 @@
             <div><span class="font-extrabold text-xs block custom-text-main">${wh.name}</span><span class="text-[9px] custom-text-muted font-mono">ID: ${wh.id}</span></div>
             <div class="flex items-center gap-1">
               <button onclick="editWarehouse('${wh.id}')" class="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-              <button onclick="deleteWarehouse('${wh.id}')" class="text-red-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteWarehouse('${wh.id}')" class="text-red-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
             </div>
           </div>`;
       });
@@ -1623,6 +1980,13 @@
       document.getElementById('set-store-address').value = appState.settings.address || '';
       document.getElementById('set-store-currency').value = appState.settings.currency;
 
+      if (appState.settings.logo) {
+        document.getElementById('store-logo-preview').innerHTML = `<img src="${appState.settings.logo}" class="w-full h-full object-contain">`;
+      }
+      if (appState.settings.loginBg) {
+        document.getElementById('login-bg-preview').innerHTML = `<img src="${appState.settings.loginBg}" class="w-full h-full object-cover">`;
+      }
+
       const colors = appState.colors;
       document.getElementById('set-color-app-bg').value = colors.appBg || "#0f172a";
       document.getElementById('set-color-card-bg').value = colors.cardBg || "#1e293b";
@@ -1640,6 +2004,14 @@
       appState.settings.address = document.getElementById('set-store-address').value.trim();
       appState.settings.currency = document.getElementById('set-store-currency').value.trim() || '$';
 
+      const logoPreview = document.getElementById('store-logo-preview');
+      const logoBase64 = logoPreview.dataset.base64 || (logoPreview.querySelector('img') ? logoPreview.querySelector('img').src : null);
+      appState.settings.logo = logoBase64;
+
+      const bgPreview = document.getElementById('login-bg-preview');
+      const bgBase64 = bgPreview.dataset.base64 || (bgPreview.querySelector('img') ? bgPreview.querySelector('img').src : null);
+      appState.settings.loginBg = bgBase64;
+
       appState.colors = {
         appBg: document.getElementById('set-color-app-bg').value,
         cardBg: document.getElementById('set-color-card-bg').value,
@@ -1649,9 +2021,10 @@
       };
 
       applyCustomColors();
+      updateLoginScreenVisuals();
       saveStateRemote();
       renderAll();
-      alert("Configuración y tema visual guardados con éxito.");
+      alert("Configuración, logo e imagen de fondo guardados con éxito.");
     }
 
     function exportData() {
