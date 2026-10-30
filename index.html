@@ -44,6 +44,36 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCT0ZQcHbNzSU2_q-vk5QA2j4xSx-aX10c",
+      authDomain: "inventario-4e40e.firebaseapp.com",
+      projectId: "inventario-4e40e",
+      storageBucket: "inventario-4e40e.firebasestorage.app",
+      messagingSenderId: "851977920346",
+      appId: "1:851977920346:web:74d0bc894481e226661d63"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.doc = doc;
+    window.onSnapshot = onSnapshot;
+    window.setDoc = setDoc;
+
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
+
   <style id="custom-theme-styles">
     :root {
       --app-bg: #0f172a;
@@ -128,9 +158,7 @@
 
   <!-- STICKY TOP HEADER & NAVIGATION -->
   <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkcard/95 backdrop-blur border-b border-slate-200 dark:border-darkborder shadow-sm custom-card">
-    <!-- Top Bar -->
     <div class="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between gap-2">
-      <!-- App Brand -->
       <div class="flex items-center gap-2">
         <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-2 rounded-xl font-extrabold flex items-center justify-center shadow-md shadow-brand-500/20 custom-bg-accent">
           <i id="header-brand-icon" data-lucide="umbrella" class="w-5 h-5"></i>
@@ -143,22 +171,23 @@
         </div>
       </div>
 
-      <!-- Quick Actions -->
       <div class="flex items-center gap-1.5">
-        <!-- Critical Alert Badge Button -->
+        <!-- Indicador de Sincronización en Vivo -->
+        <span id="sync-status-badge" class="text-[10px] bg-amber-500 text-white px-2 py-1 rounded-full flex items-center gap-1 font-bold">
+          <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Conectando...
+        </span>
+
         <button id="btn-header-critical" onclick="setFilterAlert('critical')" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl font-extrabold text-xs flex items-center gap-1 border border-red-500/30 transition-all" title="Ver Stock Crítico">
           <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-red-500 animate-pulse-red"></i>
           <span class="hidden sm:inline">Críticos:</span>
           <span id="header-critical-count" class="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">0</span>
         </button>
 
-        <!-- Cart Button -->
         <button id="btn-header-cart" onclick="switchTab('pos')" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-500/20 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all">
           <i data-lucide="shopping-cart" class="w-4 h-4"></i>
           <span id="header-cart-count" class="bg-brand-500 text-darkbg text-[10px] font-black px-1.5 py-0.2 rounded-full custom-bg-accent">0</span>
         </button>
 
-        <!-- Theme Toggle -->
         <button id="theme-toggle-btn" onclick="toggleTheme()" class="p-1.5 rounded-xl border border-slate-200 dark:border-darkborder hover:bg-slate-100 dark:hover:bg-darkhover text-slate-600 dark:text-slate-300 transition-colors">
           <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
           <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
@@ -193,28 +222,20 @@
     
     <!-- SECTION 1: INVENTORY -->
     <section id="tab-inventory" class="tab-content space-y-3">
-      
-      <!-- Filters and Search Toolbar -->
       <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
-        
-        <!-- Search Field -->
         <div class="relative">
           <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500 font-bold"></i>
-          <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Código (Sh 140, 140-1), Nombre, Estante..." class="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-medium custom-card">
+          <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Código, Nombre, Estante..." class="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-medium custom-card">
           <button onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
             <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
 
-        <!-- Filter controls -->
         <div class="flex flex-wrap items-center justify-between gap-1.5 text-xs">
           <div class="flex items-center gap-1.5 flex-1 min-w-[200px]">
-            <!-- Warehouse Filter -->
             <select id="inventory-wh-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder font-bold rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500 truncate flex-1 custom-card">
-              <!-- Dynamic -->
             </select>
 
-            <!-- Alert Filter -->
             <select id="inventory-alert-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder font-bold rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-brand-500 truncate flex-1 custom-card">
               <option value="all">Estado: Todos</option>
               <option value="critical">🔴 Stock Crítico</option>
@@ -223,10 +244,9 @@
             </select>
           </div>
 
-          <!-- View Mode Toggle & Add Product Button -->
           <div class="flex items-center gap-1 shrink-0">
             <div class="flex border border-slate-200 dark:border-darkborder rounded-xl p-0.5 bg-slate-50 dark:bg-darkbg custom-card">
-              <button onclick="setViewMode('list')" id="btn-view-list" class="p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" title="Vista Lista Compacta">
+              <button onclick="setViewMode('list')" id="btn-view-list" class="p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" title="Vista Lista">
                 <i data-lucide="list" class="w-3.5 h-3.5"></i>
               </button>
               <button onclick="setViewMode('grid')" id="btn-view-grid" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-200" title="Vista Cuadrícula">
@@ -241,25 +261,13 @@
         </div>
       </div>
 
-      <!-- CRITICAL ALERT SUMMARY BANNER -->
-      <div id="inventory-alert-banner" class="hidden"></div>
+      <div id="inventory-render-container"></div>
 
-      <!-- INVENTORY LIST / GRID CONTAINER -->
-      <div id="inventory-render-container">
-        <!-- Rendered dynamically -->
-      </div>
-
-      <!-- PAGINATION CONTROLS -->
-      <div id="inventory-pagination" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card">
-        <!-- Rendered dynamically -->
-      </div>
-
+      <div id="inventory-pagination" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card"></div>
     </section>
 
-    <!-- SECTION 2: POINT OF SALE (POS) -->
+    <!-- SECTION 2: POS -->
     <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
-      
-      <!-- Catalog Picker (Left 7 cols) -->
       <div class="lg:col-span-7 space-y-3">
         <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-2 custom-card">
           <div class="flex flex-wrap items-center justify-between gap-2">
@@ -268,7 +276,6 @@
             </h2>
 
             <div class="flex items-center gap-2">
-              <!-- VIP Toggle Switch -->
               <div class="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/30 px-2 py-1 rounded-xl">
                 <i data-lucide="crown" class="w-3.5 h-3.5 text-vip-500"></i>
                 <label for="pos-vip-toggle" class="text-[10px] font-black text-purple-600 dark:text-purple-400 cursor-pointer">CLIENTE VIP (PRECIOS JEFA)</label>
@@ -276,24 +283,19 @@
               </div>
 
               <select id="pos-warehouse-select" onchange="renderPOSCatalog()" class="bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder text-xs font-bold px-2 py-1 rounded-lg custom-card">
-                <!-- Dynamic -->
               </select>
             </div>
           </div>
 
           <div class="relative">
             <i data-lucide="scan" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
-            <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Buscar por Nombre o Cualquier Código..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 custom-card">
+            <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Buscar por Nombre o Código..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-500 custom-card">
           </div>
         </div>
 
-        <!-- POS Catalog List -->
-        <div id="pos-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[500px] overflow-y-auto pr-1">
-          <!-- Dynamic -->
-        </div>
+        <div id="pos-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[500px] overflow-y-auto pr-1"></div>
       </div>
 
-      <!-- POS Cart (Right 5 cols) -->
       <div class="lg:col-span-5 space-y-3">
         <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3.5 rounded-2xl shadow-lg flex flex-col justify-between min-h-[480px] custom-card">
           <div>
@@ -309,11 +311,8 @@
               </button>
             </div>
 
-            <div id="cart-items-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-              <!-- Dynamic -->
-            </div>
+            <div id="cart-items-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
 
-            <!-- Customer Form -->
             <div class="mt-3 pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
               <h3 class="font-bold text-[10px] uppercase tracking-wider custom-text-muted">Datos Cliente</h3>
               <div class="grid grid-cols-2 gap-1.5">
@@ -325,7 +324,6 @@
             </div>
           </div>
 
-          <!-- Total & Summary Details -->
           <div class="mt-4 border-t border-slate-200 dark:border-darkborder pt-3 space-y-2">
             <div class="flex justify-between text-xs font-semibold custom-text-muted">
               <span>Total de Artículos:</span>
@@ -342,10 +340,9 @@
           </div>
         </div>
       </div>
-
     </section>
 
-    <!-- SECTION 3: HISTORIAL DE VENTAS -->
+    <!-- SECTION 3: SALES -->
     <section id="tab-sales" class="tab-content hidden space-y-3">
       <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl shadow-sm space-y-3 custom-card">
         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -359,7 +356,6 @@
           </div>
         </div>
 
-        <!-- Date Range Controls -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           <div>
             <label class="block text-[10px] font-semibold custom-text-muted mb-0.5">Desde Fecha:</label>
@@ -378,10 +374,7 @@
         </div>
       </div>
 
-      <!-- Sales List Container -->
-      <div id="sales-list-container" class="space-y-2">
-        <!-- Rendered dynamically -->
-      </div>
+      <div id="sales-list-container" class="space-y-2"></div>
     </section>
 
     <!-- SECTION 4: WAREHOUSES -->
@@ -395,7 +388,7 @@
       <div id="warehouses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
     </section>
 
-    <!-- SECTION 5: SETTINGS & THEME COLOR CUSTOMIZER -->
+    <!-- SECTION 5: SETTINGS -->
     <section id="tab-settings" class="tab-content hidden space-y-3">
       <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-4 rounded-2xl shadow-sm space-y-4 custom-card">
         <h2 class="font-bold text-base border-b border-slate-200 dark:border-darkborder pb-2 flex items-center gap-2">
@@ -403,7 +396,6 @@
         </h2>
 
         <form id="settings-form" onsubmit="saveSettings(event)" class="space-y-3 text-xs">
-          <!-- Business Information -->
           <div class="space-y-2">
             <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-slate-400">Datos de la Empresa y Dirección</h3>
             <div class="grid grid-cols-2 gap-2">
@@ -430,7 +422,7 @@
 
             <div>
               <label class="block font-semibold mb-1">Dirección Física de la Tienda / Galpón</label>
-              <input type="text" id="set-store-address" placeholder="Ej: Av. Principal Local 5, Zona Comercial" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
+              <input type="text" id="set-store-address" placeholder="Ej: Av. Principal Local 5" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl custom-card">
             </div>
 
             <div>
@@ -439,13 +431,10 @@
             </div>
           </div>
 
-          <!-- APP COLOR PALETTE CUSTOMIZER -->
           <div class="pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
             <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-brand-500 flex items-center gap-1">
               <i data-lucide="palette" class="w-3.5 h-3.5"></i> Personalización de Colores del Tema
             </h3>
-            <p class="text-[10px] custom-text-muted">Selecciona los colores exactos para los fondos, tarjetas, textos y botones:</p>
-
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <div class="p-2 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card flex flex-col justify-between">
                 <label class="block font-semibold text-[10px] mb-1">Fondo de App</label>
@@ -478,50 +467,6 @@
             </div>
           </div>
 
-          <!-- Screen Labels & Icons Customization -->
-          <div class="pt-3 border-t border-slate-200 dark:border-darkborder space-y-2">
-            <h3 class="font-extrabold text-[11px] uppercase tracking-wider text-brand-500">Nombres e Íconos de las Pantallas</h3>
-            
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block font-semibold mb-1">Ícono Logo Principal</label>
-                <select id="set-brand-icon" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-medium custom-card">
-                  <option value="umbrella">Umbrella (Sombrilla)</option>
-                  <option value="boxes">Boxes (Cajas)</option>
-                  <option value="store">Store (Tienda)</option>
-                  <option value="flashlight">Flashlight (Linterna)</option>
-                  <option value="shopping-bag">Shopping Bag (Bolsa)</option>
-                  <option value="warehouse">Warehouse (Almacén)</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block font-semibold mb-1">Pantalla 1 (Inventario)</label>
-                <input type="text" id="set-lbl-inventory" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-medium custom-card">
-              </div>
-
-              <div>
-                <label class="block font-semibold mb-1">Pantalla 2 (POS / Venta)</label>
-                <input type="text" id="set-lbl-pos" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-medium custom-card">
-              </div>
-
-              <div>
-                <label class="block font-semibold mb-1">Pantalla 3 (Ventas)</label>
-                <input type="text" id="set-lbl-sales" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-medium custom-card">
-              </div>
-
-              <div>
-                <label class="block font-semibold mb-1">Pantalla 4 (Almacenes)</label>
-                <input type="text" id="set-lbl-warehouses" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-medium custom-card">
-              </div>
-
-              <div>
-                <label class="block font-semibold mb-1">Pantalla 5 (Ajustes)</label>
-                <input type="text" id="set-lbl-settings" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-medium custom-card">
-              </div>
-            </div>
-          </div>
-
           <button type="submit" class="bg-brand-500 text-darkbg font-bold px-4 py-2 rounded-xl text-xs uppercase shadow custom-bg-accent">Guardar Configuración</button>
         </form>
 
@@ -531,13 +476,11 @@
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- MODAL 1: CREATE / EDIT PRODUCT -->
+  <!-- MODAL: PRODUCTO -->
   <div id="product-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col custom-card">
-      <!-- Modal Header -->
       <div class="p-3.5 border-b border-slate-200 dark:border-darkborder flex items-center justify-between">
         <h3 id="product-modal-title" class="font-extrabold text-sm flex items-center gap-2">
           <i data-lucide="package" class="w-4 h-4 text-brand-500"></i> Crear Nuevo Producto
@@ -547,26 +490,22 @@
         </button>
       </div>
 
-      <!-- Modal Form -->
       <form id="product-form" onsubmit="saveProduct(event)" class="p-3.5 overflow-y-auto space-y-3 text-xs">
         <input type="hidden" id="prod-id">
 
-        <!-- Name & Multi Codes -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label class="block font-semibold mb-1">Nombre del Producto *</label>
-            <input type="text" id="prod-name" required placeholder="Ej: Paraguas Bastón Mango Plomo Entero" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs font-medium custom-card">
+            <input type="text" id="prod-name" required placeholder="Ej: Paraguas Bastón" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl text-xs font-medium custom-card">
           </div>
           <div>
             <label class="block font-semibold mb-1">Códigos / SKUs (Separados por coma) *</label>
-            <input type="text" id="prod-codes" required placeholder="Ej: Sh 140, Dh 7-2, P-140" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-mono font-bold text-xs custom-card">
-            <p class="text-[9px] custom-text-muted mt-0.5">Puedes agregar varios códigos separados por coma.</p>
+            <input type="text" id="prod-codes" required placeholder="Ej: Sh 140, 140-1" class="w-full bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder p-2 rounded-xl font-mono font-bold text-xs custom-card">
           </div>
         </div>
 
-        <!-- Image Upload from Phone Gallery -->
         <div class="p-2.5 bg-slate-50 dark:bg-darkbg border border-slate-200 dark:border-darkborder rounded-xl custom-card">
-          <label class="block font-semibold mb-1">Foto del Producto (Galería o Cámara del Teléfono)</label>
+          <label class="block font-semibold mb-1">Foto del Producto (Galería o Cámara)</label>
           <div class="flex items-center gap-3">
             <div id="prod-img-preview" class="w-12 h-12 rounded-xl bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder flex items-center justify-center overflow-hidden shrink-0 custom-card">
               <i data-lucide="image" class="w-5 h-5 text-slate-400"></i>
@@ -575,22 +514,20 @@
           </div>
         </div>
 
-        <!-- Box ratio & Min Stock -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div class="p-2.5 bg-brand-500/10 border border-brand-500/30 rounded-xl">
-            <label class="block font-bold text-brand-600 dark:text-brand-400 mb-1">Unidades por Caja ("cajón") *</label>
+            <label class="block font-bold text-brand-600 dark:text-brand-400 mb-1">Unidades por Caja *</label>
             <input type="number" id="prod-box-units" min="1" value="24" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1.5 rounded-lg font-black text-xs custom-card">
           </div>
 
           <div class="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl">
             <label class="block font-bold text-red-600 dark:text-red-400 mb-1">Stock Mínimo Crítico *</label>
-            <input type="number" id="prod-min-stock" min="0" value="10" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-slate-200 p-1.5 rounded-lg font-black text-xs text-red-500 custom-card">
+            <input type="number" id="prod-min-stock" min="0" value="10" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1.5 rounded-lg font-black text-xs text-red-500 custom-card">
           </div>
         </div>
 
-        <!-- Regular Prices -->
         <div>
-          <h4 class="font-bold text-[11px] uppercase tracking-wider custom-text-muted mb-1.5">Tarifas de Precio Regulares</h4>
+          <h4 class="font-bold text-[11px] uppercase tracking-wider custom-text-muted mb-1.5">Tarifas Regulares</h4>
           <div class="grid grid-cols-3 gap-2">
             <div class="p-2 bg-slate-50 dark:bg-darkbg rounded-xl border border-slate-200 dark:border-darkborder custom-card">
               <label class="block font-semibold text-[10px]">P. Detal</label>
@@ -607,51 +544,42 @@
           </div>
         </div>
 
-        <!-- VIP Prices (Precios Jefa) -->
         <div class="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl">
           <h4 class="font-bold text-[11px] uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1.5 flex items-center gap-1">
-            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Tarifas de Precio VIP (Precios de Jefa)
+            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Tarifas VIP (Precios Jefa)
           </h4>
           <div class="grid grid-cols-3 gap-2">
             <div>
               <label class="block font-semibold text-[10px] text-purple-500">P. Detal VIP</label>
-              <input type="number" step="0.01" id="prod-price-vip-detal" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 dark:text-purple-300 custom-card">
+              <input type="number" step="0.01" id="prod-price-vip-detal" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 custom-card">
             </div>
             <div>
               <label class="block font-semibold text-[10px] text-purple-500">P. Mayor VIP</label>
-              <input type="number" step="0.01" id="prod-price-vip-mayor" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 dark:text-purple-300 custom-card">
+              <input type="number" step="0.01" id="prod-price-vip-mayor" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 custom-card">
             </div>
             <div>
               <label class="block font-semibold text-[10px] text-purple-500">P. Caja VIP</label>
-              <input type="number" step="0.01" id="prod-price-vip-caja" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 dark:text-purple-300 custom-card">
+              <input type="number" step="0.01" id="prod-price-vip-caja" required placeholder="0.00" class="w-full bg-white dark:bg-darkcard border border-purple-200 dark:border-purple-900/50 p-1 rounded font-bold text-xs mt-1 text-purple-600 custom-card">
             </div>
           </div>
         </div>
 
-        <!-- Physical Stock Breakdown per Warehouse -->
         <div>
           <h4 class="font-bold text-[11px] uppercase tracking-wider text-brand-500 mb-1.5 flex items-center gap-1">
-            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Ubicación Física y Stock Inicial
+            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Ubicación y Stock por Almacén
           </h4>
-          <div id="prod-modal-warehouses-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-            <!-- Dynamic -->
-          </div>
+          <div id="prod-modal-warehouses-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
         </div>
 
-        <!-- Modal Actions -->
         <div class="pt-2 border-t border-slate-200 dark:border-darkborder flex items-center justify-end gap-2">
-          <button type="button" onclick="closeProductModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-darkbg font-semibold text-xs custom-card">
-            Cancelar
-          </button>
-          <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-darkbg font-bold text-xs uppercase shadow custom-bg-accent">
-            Guardar
-          </button>
+          <button type="button" onclick="closeProductModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-darkbg font-semibold text-xs custom-card">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-darkbg font-bold text-xs uppercase shadow custom-bg-accent">Guardar</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 2: WAREHOUSE EDIT/CREATE -->
+  <!-- MODAL: ALMACÉN -->
   <div id="wh-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder w-full max-w-md rounded-2xl shadow-2xl p-4 space-y-3 custom-card">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-darkborder pb-2">
@@ -674,19 +602,16 @@
     </div>
   </div>
 
-  <!-- MODAL 3: POST-SALE DELIVERY NOTE -->
+  <!-- MODAL: NOTA DE ENTREGA -->
   <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
     <div class="bg-white text-slate-900 border border-slate-200 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      
       <div id="print-area" class="p-5 overflow-y-auto space-y-3 text-xs">
         <div class="text-center border-b pb-2 space-y-0.5">
           <h2 id="receipt-store-name" class="font-black text-base uppercase">MI ALMACÉN</h2>
           <p id="receipt-store-doc" class="text-[10px] text-slate-500">RIF: J-00000000-0</p>
           <p id="receipt-store-phone" class="text-[10px] text-slate-500">Tel: +58 000 0000000</p>
           <p id="receipt-store-address" class="text-[10px] text-slate-500">Dirección</p>
-          <div class="inline-block bg-slate-900 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-1">
-            Nota de Entrega
-          </div>
+          <div class="inline-block bg-slate-900 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-1">Nota de Entrega</div>
         </div>
 
         <div class="grid grid-cols-2 gap-2 text-[10px] border-b pb-2">
@@ -728,10 +653,8 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT APP LOGIC -->
+  <!-- JAVASCRIPT APP LOGIC CON FIREBASE EN VIVO -->
   <script>
-    const STORAGE_KEY = 'STOCKPRO_REAL_VARIED_INVENTORY_V8';
-
     let appState = {
       theme: 'dark',
       viewMode: 'list',
@@ -772,105 +695,70 @@
       lastCompletedSale: null
     };
 
-    function generateDemoProducts() {
-      return [
-        {
-          id: "prod_1",
-          name: "Paraguas Tipo Bastón Mango Plomo Color Entero",
-          codes: ["Sh 140", "Dh 7-2", "PB-ENT-01"],
-          boxUnits: 24,
-          minStock: 15,
-          prices: { 
-            detal: 4.50, mayor: 3.80, caja: 80.00,
-            vipDetal: 4.00, vipMayor: 3.40, vipCaja: 72.00 
-          },
-          image: null,
-          stock: {
-            wh_1: { boxes: 5, loose: 4, rack: "Estante P-01", shelf: "Nivel 1" },
-            wh_2: { boxes: 2, loose: 0, rack: "Rack B-02", shelf: "Piso" },
-            wh_3: { boxes: 0, loose: 3, rack: "Mostrador", shelf: "Exhibidor" }
-          }
-        },
-        {
-          id: "prod_2",
-          name: "Paraguas Tipo Bastón Mango Plomo Color Neón",
-          codes: ["140-1", "Dh 7-1", "PB-NEON-02"],
-          boxUnits: 24,
-          minStock: 15,
-          prices: { 
-            detal: 4.80, mayor: 4.00, caja: 85.00,
-            vipDetal: 4.20, vipMayor: 3.60, vipCaja: 78.00 
-          },
-          image: null,
-          stock: {
-            wh_1: { boxes: 8, loose: 10, rack: "Estante P-01", shelf: "Nivel 2" },
-            wh_2: { boxes: 0, loose: 2, rack: "Rack B-02", shelf: "Nivel 1" },
-            wh_3: { boxes: 1, loose: 0, rack: "Mostrador", shelf: "Exhibidor" }
-          }
-        },
-        {
-          id: "prod_3",
-          name: "Linterna LED Recargable de Cabeza / Minera",
-          codes: ["LNT-MIN-01", "DH-882", "SH-90"],
-          boxUnits: 50,
-          minStock: 25,
-          prices: { 
-            detal: 6.50, mayor: 5.20, caja: 230.00,
-            vipDetal: 5.80, vipMayor: 4.80, vipCaja: 210.00 
-          },
-          image: null,
-          stock: {
-            wh_1: { boxes: 3, loose: 20, rack: "Estante L-02", shelf: "Nivel 1" },
-            wh_2: { boxes: 1, loose: 0, rack: "Rack L-01", shelf: "Nivel 4" },
-            wh_3: { boxes: 0, loose: 4, rack: "Mostrador", shelf: "Caja 2" }
-          }
-        }
-      ];
-    }
-
-    // INIT
     window.addEventListener('DOMContentLoaded', () => {
-      loadState();
       applyTheme();
       applyCustomColors();
-      renderAll();
       lucide.createIcons();
     });
 
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-    }
+    // ESCUCHAR FIREBASE EN TIEMPO REAL
+    window.addEventListener('firebase-ready', () => {
+      const badge = document.getElementById('sync-status-badge');
+      if (badge) {
+        badge.className = "text-[10px] bg-green-500 text-white px-2 py-1 rounded-full flex items-center gap-1 font-bold";
+        badge.innerHTML = '<i data-lucide="cloud" class="w-3 h-3"></i> En Vivo (Firebase)';
+        lucide.createIcons();
+      }
 
-    function loadState() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          appState = Object.assign(appState, JSON.parse(saved));
-        } catch(e) {
-          console.error(e);
+      // Sincronizar Configuración / Estado Global
+      window.onSnapshot(window.doc(window.db, "app_data", "main_state"), (docSnap) => {
+        if (docSnap.exists()) {
+          const remoteData = docSnap.data();
+          if (remoteData.settings) appState.settings = remoteData.settings;
+          if (remoteData.warehouses) appState.warehouses = remoteData.warehouses;
+          if (remoteData.colors) appState.colors = remoteData.colors;
+          applyCustomColors();
+        } else {
+          // Inicializar estado remoto si no existe
+          window.setDoc(window.doc(window.db, "app_data", "main_state"), {
+            settings: appState.settings,
+            warehouses: appState.warehouses,
+            colors: appState.colors
+          });
         }
-      }
-      if (!appState.products || appState.products.length === 0) {
-        appState.products = generateDemoProducts();
-      }
-      if (!appState.salesHistory) {
+        renderAll();
+      });
+
+      // Sincronizar Productos en tiempo real
+      window.onSnapshot(window.collection(window.db, "products"), (snapshot) => {
+        appState.products = [];
+        snapshot.forEach((doc) => {
+          appState.products.push({ id: doc.id, ...doc.data() });
+        });
+        renderAll();
+      });
+
+      // Sincronizar Ventas en tiempo real
+      window.onSnapshot(window.collection(window.db, "sales"), (snapshot) => {
         appState.salesHistory = [];
-      }
-      if (!appState.colors) {
-        appState.colors = {
-          appBg: "#0f172a",
-          cardBg: "#1e293b",
-          textMain: "#f8fafc",
-          textMuted: "#94a3b8",
-          accent: "#eab308"
-        };
-      }
+        snapshot.forEach((doc) => {
+          appState.salesHistory.push({ id: doc.id, ...doc.data() });
+        });
+        renderSalesHistory();
+      });
+    });
+
+    function saveStateRemote() {
+      window.setDoc(window.doc(window.db, "app_data", "main_state"), {
+        settings: appState.settings,
+        warehouses: appState.warehouses,
+        colors: appState.colors
+      }).catch(err => console.error("Error al sincronizar estado:", err));
     }
 
     function toggleTheme() {
       appState.theme = appState.theme === 'dark' ? 'light' : 'dark';
       applyTheme();
-      saveState();
     }
 
     function applyTheme() {
@@ -882,14 +770,7 @@
     }
 
     function applyCustomColors() {
-      const colors = appState.colors || {
-        appBg: "#0f172a",
-        cardBg: "#1e293b",
-        textMain: "#f8fafc",
-        textMuted: "#94a3b8",
-        accent: "#eab308"
-      };
-
+      const colors = appState.colors;
       const styleTag = document.getElementById('custom-theme-styles');
       if (styleTag) {
         styleTag.innerHTML = `
@@ -900,77 +781,38 @@
             --text-muted: ${colors.textMuted};
             --accent-color: ${colors.accent};
           }
-
-          body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            background-color: var(--app-bg) !important;
-            color: var(--text-main) !important;
-          }
-
-          .custom-card {
-            background-color: var(--card-bg) !important;
-            color: var(--text-main) !important;
-          }
-
-          .custom-text-main {
-            color: var(--text-main) !important;
-          }
-
-          .custom-text-muted {
-            color: var(--text-muted) !important;
-          }
-
-          .custom-bg-accent {
-            background-color: var(--accent-color) !important;
-          }
-          
-          ::-webkit-scrollbar-thumb {
-            background: var(--accent-color);
-          }
+          body { background-color: var(--app-bg) !important; color: var(--text-main) !important; }
+          .custom-card { background-color: var(--card-bg) !important; color: var(--text-main) !important; }
+          .custom-text-main { color: var(--text-main) !important; }
+          .custom-text-muted { color: var(--text-muted) !important; }
+          .custom-bg-accent { background-color: var(--accent-color) !important; }
+          ::-webkit-scrollbar-thumb { background: var(--accent-color); }
         `;
       }
     }
 
     function resetThemeColors() {
-      appState.colors = {
-        appBg: "#0f172a",
-        cardBg: "#1e293b",
-        textMain: "#f8fafc",
-        textMuted: "#94a3b8",
-        accent: "#eab308"
-      };
+      appState.colors = { appBg: "#0f172a", cardBg: "#1e293b", textMain: "#f8fafc", textMuted: "#94a3b8", accent: "#eab308" };
       applyCustomColors();
       renderSettingsForm();
-      saveState();
+      saveStateRemote();
     }
 
     function toggleVipMode() {
       const vipCheckbox = document.getElementById('pos-vip-toggle');
       appState.isVipActive = vipCheckbox ? vipCheckbox.checked : false;
-      
       const badge = document.getElementById('pos-cart-vip-badge');
       if (badge) {
-        if (appState.isVipActive) {
-          badge.classList.remove('hidden');
-        } else {
-          badge.classList.add('hidden');
-        }
+        if (appState.isVipActive) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
       }
-
       renderPOSCart();
     }
 
     function setViewMode(mode) {
       appState.viewMode = mode;
-      document.getElementById('btn-view-list').className = mode === 'list' 
-        ? "p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" 
-        : "p-1.5 rounded-lg text-slate-400 hover:text-slate-200";
-      
-      document.getElementById('btn-view-grid').className = mode === 'grid' 
-        ? "p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" 
-        : "p-1.5 rounded-lg text-slate-400 hover:text-slate-200";
-
+      document.getElementById('btn-view-list').className = mode === 'list' ? "p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" : "p-1.5 rounded-lg text-slate-400 hover:text-slate-200";
+      document.getElementById('btn-view-grid').className = mode === 'grid' ? "p-1.5 rounded-lg bg-brand-500 text-darkbg font-bold custom-bg-accent" : "p-1.5 rounded-lg text-slate-400 hover:text-slate-200";
       renderInventory();
     }
 
@@ -988,9 +830,7 @@
         activeBtn.classList.add('bg-brand-500', 'text-darkbg', 'shadow-sm', 'custom-bg-accent');
         activeBtn.classList.remove('text-slate-600', 'dark:text-slate-300');
       }
-
       if (tabId === 'sales') renderSalesHistory();
-
       lucide.createIcons();
     }
 
@@ -1007,16 +847,13 @@
     function renderHeaderAndCustomization() {
       document.getElementById('header-store-name').textContent = appState.settings.storeName;
       document.getElementById('header-store-subtitle').textContent = appState.settings.storeSubtitle || "Control de Stock";
-
       const brandIconEl = document.getElementById('header-brand-icon');
-      if (brandIconEl) {
-        brandIconEl.setAttribute('data-lucide', appState.settings.brandIcon || 'umbrella');
-      }
+      if (brandIconEl) brandIconEl.setAttribute('data-lucide', appState.settings.brandIcon || 'umbrella');
 
       const labels = appState.settings.labels || {};
       if (labels.inventory) document.getElementById('nav-lbl-inventory').textContent = labels.inventory;
       if (labels.pos) document.getElementById('nav-lbl-pos').textContent = labels.pos;
-      if (labels.sales) document.getElementById('nav-lbl-sales').textContent = labels.sales || "Ventas";
+      if (labels.sales) document.getElementById('nav-lbl-sales').textContent = labels.sales;
       if (labels.warehouses) document.getElementById('nav-lbl-warehouses').textContent = labels.warehouses;
       if (labels.settings) document.getElementById('nav-lbl-settings').textContent = labels.settings;
 
@@ -1025,34 +862,19 @@
       let criticalCount = 0;
       appState.products.forEach(p => {
         appState.warehouses.forEach(w => {
-          const st = p.stock[w.id] || { boxes: 0, loose: 0 };
-          if (((st.boxes * p.boxUnits) + st.loose) <= p.minStock) criticalCount++;
+          const st = p.stock && p.stock[w.id] ? p.stock[w.id] : { boxes: 0, loose: 0 };
+          const totalUnits = (st.boxes * (p.boxUnits || 1)) + st.loose;
+          if (totalUnits <= (p.minStock || 0)) criticalCount++;
         });
       });
       document.getElementById('header-critical-count').textContent = criticalCount;
-
       lucide.createIcons();
     }
 
-    function onSearchInput() {
-      appState.currentPage = 1;
-      renderInventory();
-    }
+    function onSearchInput() { appState.currentPage = 1; renderInventory(); }
+    function clearSearch() { document.getElementById('inventory-search').value = ''; appState.currentPage = 1; renderInventory(); }
+    function setFilterAlert(alertType) { switchTab('inventory'); document.getElementById('inventory-alert-filter').value = alertType; appState.currentPage = 1; renderInventory(); }
 
-    function clearSearch() {
-      document.getElementById('inventory-search').value = '';
-      appState.currentPage = 1;
-      renderInventory();
-    }
-
-    function setFilterAlert(alertType) {
-      switchTab('inventory');
-      document.getElementById('inventory-alert-filter').value = alertType;
-      appState.currentPage = 1;
-      renderInventory();
-    }
-
-    // INVENTORY CONTROLLER
     function renderInventory() {
       const search = document.getElementById('inventory-search').value.toLowerCase().trim();
       const whFilter = document.getElementById('inventory-wh-filter').value || 'all';
@@ -1069,19 +891,17 @@
         const prodCodesArr = Array.isArray(p.codes) ? p.codes : [p.code || ''];
         const matchesCode = prodCodesArr.some(c => c.toLowerCase().includes(search));
         const matchesName = p.name.toLowerCase().includes(search);
-        const matchesRack = Object.values(p.stock).some(s => s.rack?.toLowerCase().includes(search));
-        
+        const matchesRack = p.stock && Object.values(p.stock).some(s => s.rack?.toLowerCase().includes(search));
         if (!matchesCode && !matchesName && !matchesRack) return false;
 
-        if (alertFilter !== 'all') {
+        if (alertFilter !== 'all' && p.stock) {
           let hasMatch = false;
           appState.warehouses.forEach(wh => {
             if (whFilter === 'all' || whFilter === wh.id) {
               const st = p.stock[wh.id] || { boxes: 0, loose: 0 };
-              const totalUnits = (st.boxes * p.boxUnits) + st.loose;
-              const isCritical = totalUnits <= p.minStock;
+              const totalUnits = (st.boxes * (p.boxUnits || 1)) + st.loose;
+              const isCritical = totalUnits <= (p.minStock || 0);
               const isZeroLoose = (st.boxes > 0 && st.loose === 0);
-
               if (alertFilter === 'critical' && isCritical) hasMatch = true;
               if (alertFilter === 'zero_loose' && isZeroLoose) hasMatch = true;
               if (alertFilter === 'ok' && !isCritical && !isZeroLoose) hasMatch = true;
@@ -1089,7 +909,6 @@
           });
           if (!hasMatch) return false;
         }
-
         return true;
       });
 
@@ -1104,12 +923,7 @@
       container.innerHTML = '';
 
       if (paginatedProducts.length === 0) {
-        container.innerHTML = `
-          <div class="py-8 text-center text-slate-400 bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder custom-card">
-            <i data-lucide="package-x" class="w-8 h-8 mx-auto mb-1 opacity-40"></i>
-            <p class="font-bold text-xs">No se encontraron productos.</p>
-          </div>
-        `;
+        container.innerHTML = `<div class="py-8 text-center text-slate-400 bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder custom-card"><i data-lucide="package-x" class="w-8 h-8 mx-auto mb-1 opacity-40"></i><p class="font-bold text-xs">No se encontraron productos.</p></div>`;
         document.getElementById('inventory-pagination').innerHTML = '';
         lucide.createIcons();
         return;
@@ -1117,16 +931,15 @@
 
       if (appState.viewMode === 'list') {
         let listHtml = `<div class="space-y-2">`;
-        
         paginatedProducts.forEach(prod => {
           let whStockRowsHtml = '';
           const prodCodesArr = Array.isArray(prod.codes) ? prod.codes : [prod.code || ''];
 
           appState.warehouses.forEach(wh => {
             if (whFilter === 'all' || whFilter === wh.id) {
-              const st = prod.stock[wh.id] || { boxes: 0, loose: 0, rack: 'A-01', shelf: 'N1' };
-              const totalUnits = (st.boxes * prod.boxUnits) + st.loose;
-              const isCritical = totalUnits <= prod.minStock;
+              const st = prod.stock && prod.stock[wh.id] ? prod.stock[wh.id] : { boxes: 0, loose: 0, rack: 'A-01' };
+              const totalUnits = (st.boxes * (prod.boxUnits || 1)) + st.loose;
+              const isCritical = totalUnits <= (prod.minStock || 0);
               const isZeroLoose = (st.boxes > 0 && st.loose === 0);
 
               whStockRowsHtml += `
@@ -1135,20 +948,13 @@
                     <span class="font-bold truncate custom-text-main">${wh.name}:</span>
                     <span class="text-[10px] bg-slate-100 dark:bg-darkbg px-1.5 py-0.2 rounded font-mono custom-text-muted">${st.rack || 'A-01'}</span>
                   </div>
-
                   <div class="flex items-center gap-2">
                     <span class="font-mono font-bold ${isCritical ? 'text-red-500 font-extrabold animate-pulse-red' : isZeroLoose ? 'text-amber-500' : ''}">
                       ${st.boxes}caj + ${st.loose}un ${isCritical ? '🔴' : isZeroLoose ? '⚠️' : ''}
                     </span>
-
-                    ${st.boxes > 0 ? `
-                      <button onclick="quickUnpackBox('${prod.id}', '${wh.id}')" class="bg-brand-500/20 text-brand-600 dark:text-brand-400 font-bold px-1.5 py-0.5 rounded text-[10px] hover:bg-brand-500 hover:text-darkbg transition-all">
-                        Abrir
-                      </button>
-                    ` : ''}
+                    ${st.boxes > 0 ? `<button onclick="quickUnpackBox('${prod.id}', '${wh.id}')" class="bg-brand-500/20 text-brand-600 dark:text-brand-400 font-bold px-1.5 py-0.5 rounded text-[10px]">Abrir</button>` : ''}
                   </div>
-                </div>
-              `;
+                </div>`;
             }
           });
 
@@ -1166,79 +972,58 @@
                     </div>
                   </div>
                 </div>
-
                 <div class="flex items-center gap-1 shrink-0">
                   <button onclick="editProduct('${prod.id}')" class="text-slate-400 hover:text-brand-500 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                  <button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1" title="Eliminar Producto"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                  <button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                 </div>
               </div>
-
-              <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl">
-                ${whStockRowsHtml}
-              </div>
-            </div>
-          `;
+              <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl">${whStockRowsHtml}</div>
+            </div>`;
         });
-
         listHtml += `</div>`;
         container.innerHTML = listHtml;
-
       } else {
         let gridHtml = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">`;
-
         paginatedProducts.forEach(prod => {
           const prodCodesArr = Array.isArray(prod.codes) ? prod.codes : [prod.code || ''];
           gridHtml += `
             <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-2xl p-3 shadow-sm space-y-1.5 custom-card">
               <div class="flex items-center justify-between">
-                <div class="flex flex-wrap gap-1">
-                  ${prodCodesArr.map(c => `<span class="font-mono font-bold text-[9px] text-brand-500 bg-brand-500/10 px-1.5 py-0.5 rounded">${c}</span>`).join('')}
-                </div>
+                <div class="flex flex-wrap gap-1">${prodCodesArr.map(c => `<span class="font-mono font-bold text-[9px] text-brand-500 bg-brand-500/10 px-1.5 py-0.5 rounded">${c}</span>`).join('')}</div>
                 <div class="flex items-center gap-1">
                   <button onclick="editProduct('${prod.id}')" class="text-slate-400 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
                   <button onclick="deleteProduct('${prod.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                 </div>
               </div>
               <h3 class="font-extrabold text-xs truncate custom-text-main">${prod.name}</h3>
-              <p class="text-[10px] custom-text-muted">Detal: ${appState.settings.currency}${parseFloat(prod.prices.detal).toFixed(2)} | VIP: ${appState.settings.currency}${parseFloat(prod.prices.vipDetal || prod.prices.detal).toFixed(2)}</p>
-            </div>
-          `;
+              <p class="text-[10px] custom-text-muted">Detal: ${appState.settings.currency}${parseFloat(prod.prices?.detal || 0).toFixed(2)}</p>
+            </div>`;
         });
-
         gridHtml += `</div>`;
         container.innerHTML = gridHtml;
       }
 
-      // Pagination Controls
-      const pagContainer = document.getElementById('inventory-pagination');
-      pagContainer.innerHTML = `
+      document.getElementById('inventory-pagination').innerHTML = `
         <span class="custom-text-muted text-[11px]">Pág ${appState.currentPage} de ${totalPages} (${totalItems} items)</span>
         <div class="flex items-center gap-1">
-          <button onclick="changePage(-1)" ${appState.currentPage <= 1 ? 'disabled' : ''} class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-darkbg disabled:opacity-30 font-bold custom-card">Anterior</button>
-          <button onclick="changePage(1)" ${appState.currentPage >= totalPages ? 'disabled' : ''} class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-darkbg disabled:opacity-30 font-bold custom-card">Siguiente</button>
-        </div>
-      `;
-
+          <button onclick="changePage(-1)" ${appState.currentPage <= 1 ? 'disabled' : ''} class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-darkbg disabled:opacity-35 font-bold custom-card">Anterior</button>
+          <button onclick="changePage(1)" ${appState.currentPage >= totalPages ? 'disabled' : ''} class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-darkbg disabled:opacity-35 font-bold custom-card">Siguiente</button>
+        </div>`;
       lucide.createIcons();
     }
 
-    function changePage(delta) {
-      appState.currentPage += delta;
-      renderInventory();
-    }
+    function changePage(delta) { appState.currentPage += delta; renderInventory(); }
 
     function quickUnpackBox(prodId, whId) {
       const prod = appState.products.find(p => p.id === prodId);
-      if (!prod) return;
-
+      if (!prod || !prod.stock || !prod.stock[whId]) return;
       const st = prod.stock[whId];
-      if (!st || st.boxes < 1) return;
-
+      if (st.boxes < 1) return;
       st.boxes -= 1;
-      st.loose += parseInt(prod.boxUnits);
+      st.loose += parseInt(prod.boxUnits || 1);
 
-      saveState();
-      renderAll();
+      window.updateDoc(window.doc(window.db, "products", prodId), { stock: prod.stock })
+        .catch(err => alert("Error al actualizar stock: " + err));
     }
 
     function previewImage(e) {
@@ -1253,11 +1038,9 @@
       }
     }
 
-    // POS CATALOG CONTROLLER
     function renderPOSCatalog() {
       const search = document.getElementById('pos-search').value.toLowerCase().trim();
       const whSelect = document.getElementById('pos-warehouse-select');
-      
       let selectHtml = '';
       appState.warehouses.forEach(wh => {
         selectHtml += `<option value="${wh.id}">${wh.name}</option>`;
@@ -1274,17 +1057,14 @@
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<p class="text-xs custom-text-muted text-center py-6 col-span-full">No se encontraron productos en el catálogo POS.</p>`;
+        grid.innerHTML = `<p class="text-xs custom-text-muted text-center py-6 col-span-full">No se encontraron productos.</p>`;
         return;
       }
 
       filtered.forEach(prod => {
-        const st = prod.stock[selectedWhId] || { boxes: 0, loose: 0, rack: 'A-01', shelf: 'N1' };
-        const totalUnitsAvailable = (st.boxes * prod.boxUnits) + st.loose;
-
-        const currentDetalPrice = appState.isVipActive 
-          ? (prod.prices.vipDetal !== undefined ? prod.prices.vipDetal : prod.prices.detal)
-          : prod.prices.detal;
+        const st = prod.stock && prod.stock[selectedWhId] ? prod.stock[selectedWhId] : { boxes: 0, loose: 0, rack: 'A-01' };
+        const totalUnitsAvailable = (st.boxes * (prod.boxUnits || 1)) + st.loose;
+        const currentDetalPrice = appState.isVipActive ? (prod.prices?.vipDetal !== undefined ? prod.prices.vipDetal : prod.prices?.detal) : prod.prices?.detal;
 
         const card = document.createElement('div');
         card.className = "bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-2.5 rounded-xl flex items-center justify-between gap-2 shadow-sm custom-card";
@@ -1298,22 +1078,18 @@
               <p class="text-[9px] custom-text-muted font-mono">Ubic: ${st.rack || 'A-01'}</p>
               <div class="flex items-center gap-1 mt-0.5">
                 <span class="text-[10px] font-mono custom-text-muted">${st.boxes}caj + ${st.loose}un</span>
-                <span class="text-[11px] font-black ${appState.isVipActive ? 'text-purple-500' : 'text-brand-500'}">${appState.settings.currency}${parseFloat(currentDetalPrice).toFixed(2)}</span>
+                <span class="text-[11px] font-black ${appState.isVipActive ? 'text-purple-500' : 'text-brand-500'}">${appState.settings.currency}${parseFloat(currentDetalPrice || 0).toFixed(2)}</span>
               </div>
             </div>
           </div>
-
-          <button onclick="addToCart('${prod.id}')" ${totalUnitsAvailable <= 0 ? 'disabled' : ''} class="bg-brand-500 hover:bg-brand-600 disabled:opacity-30 disabled:cursor-not-allowed text-darkbg p-2 rounded-xl font-bold shrink-0 custom-bg-accent">
+          <button onclick="addToCart('${prod.id}')" ${totalUnitsAvailable <= 0 ? 'disabled' : ''} class="bg-brand-500 hover:bg-brand-600 disabled:opacity-30 text-darkbg p-2 rounded-xl font-bold shrink-0 custom-bg-accent">
             <i data-lucide="plus" class="w-4 h-4"></i>
-          </button>
-        `;
+          </button>`;
         grid.appendChild(card);
       });
-
       lucide.createIcons();
     }
 
-    // PRODUCT CREATION / EDITING / DELETION
     function openProductModal(prodId = null) {
       const modal = document.getElementById('product-modal');
       const form = document.getElementById('product-form');
@@ -1327,201 +1103,125 @@
       if (prodId) {
         const prod = appState.products.find(p => p.id === prodId);
         if (!prod) return;
-
         document.getElementById('product-modal-title').textContent = 'Editar Producto';
         document.getElementById('prod-id').value = prod.id;
         document.getElementById('prod-name').value = prod.name;
-        
-        const prodCodesArr = Array.isArray(prod.codes) ? prod.codes : [prod.code || ''];
-        document.getElementById('prod-codes').value = prodCodesArr.join(', ');
-        
-        document.getElementById('prod-box-units').value = prod.boxUnits;
+        document.getElementById('prod-codes').value = (Array.isArray(prod.codes) ? prod.codes : [prod.code || '']).join(', ');
+        document.getElementById('prod-box-units').value = prod.boxUnits || 24;
         document.getElementById('prod-min-stock').value = prod.minStock || 10;
-        
-        // Regular Prices
-        document.getElementById('prod-price-detal').value = prod.prices.detal;
-        document.getElementById('prod-price-mayor').value = prod.prices.mayor;
-        document.getElementById('prod-price-caja').value = prod.prices.caja;
-
-        // VIP Prices
-        document.getElementById('prod-price-vip-detal').value = prod.prices.vipDetal !== undefined ? prod.prices.vipDetal : prod.prices.detal;
-        document.getElementById('prod-price-vip-mayor').value = prod.prices.vipMayor !== undefined ? prod.prices.vipMayor : prod.prices.mayor;
-        document.getElementById('prod-price-vip-caja').value = prod.prices.vipCaja !== undefined ? prod.prices.vipCaja : prod.prices.caja;
+        document.getElementById('prod-price-detal').value = prod.prices?.detal || 0;
+        document.getElementById('prod-price-mayor').value = prod.prices?.mayor || 0;
+        document.getElementById('prod-price-caja').value = prod.prices?.caja || 0;
+        document.getElementById('prod-price-vip-detal').value = prod.prices?.vipDetal || 0;
+        document.getElementById('prod-price-vip-mayor').value = prod.prices?.vipMayor || 0;
+        document.getElementById('prod-price-vip-caja').value = prod.prices?.vipCaja || 0;
 
         if (prod.image) {
           document.getElementById('prod-img-preview').innerHTML = `<img src="${prod.image}" class="w-full h-full object-cover">`;
         }
 
         appState.warehouses.forEach(wh => {
-          const st = prod.stock[wh.id] || { boxes: 0, loose: 0, rack: "A-01", shelf: "N1" };
+          const st = prod.stock && prod.stock[wh.id] ? prod.stock[wh.id] : { boxes: 0, loose: 0, rack: "A-01", shelf: "N1" };
           whContainer.innerHTML += `
             <div class="bg-slate-50 dark:bg-darkbg p-2 rounded-xl border border-slate-200 dark:border-darkborder space-y-1.5 custom-card">
               <span class="font-extrabold text-[11px] text-brand-500 block">${wh.name}</span>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Estante</label>
-                  <input type="text" id="st-rack-${wh.id}" value="${st.rack || 'A-01'}" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Nivel</label>
-                  <input type="text" id="st-shelf-${wh.id}" value="${st.shelf || 'N1'}" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Cajas</label>
-                  <input type="number" id="st-box-${wh.id}" min="0" value="${st.boxes}" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Sueltas</label>
-                  <input type="number" id="st-loose-${wh.id}" min="0" value="${st.loose}" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Estante</label><input type="text" id="st-rack-${wh.id}" value="${st.rack || 'A-01'}" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Nivel</label><input type="text" id="st-shelf-${wh.id}" value="${st.shelf || 'N1'}" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Cajas</label><input type="number" id="st-box-${wh.id}" min="0" value="${st.boxes}" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Sueltas</label><input type="number" id="st-loose-${wh.id}" min="0" value="${st.loose}" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
               </div>
-            </div>
-          `;
+            </div>`;
         });
-
       } else {
         document.getElementById('product-modal-title').textContent = 'Crear Nuevo Producto';
         document.getElementById('prod-id').value = '';
-
         appState.warehouses.forEach(wh => {
           whContainer.innerHTML += `
             <div class="bg-slate-50 dark:bg-darkbg p-2 rounded-xl border border-slate-200 dark:border-darkborder space-y-1.5 custom-card">
               <span class="font-extrabold text-[11px] text-brand-500 block">${wh.name}</span>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Estante</label>
-                  <input type="text" id="st-rack-${wh.id}" value="A-01" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Nivel</label>
-                  <input type="text" id="st-shelf-${wh.id}" value="N1" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Cajas</label>
-                  <input type="number" id="st-box-${wh.id}" min="0" value="0" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
-                <div>
-                  <label class="text-[9px] font-semibold custom-text-muted">Sueltas</label>
-                  <input type="number" id="st-loose-${wh.id}" min="0" value="0" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-1 rounded text-xs font-bold custom-card">
-                </div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Estante</label><input type="text" id="st-rack-${wh.id}" value="A-01" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Nivel</label><input type="text" id="st-shelf-${wh.id}" value="N1" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Cajas</label><input type="number" id="st-box-${wh.id}" min="0" value="0" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
+                <div><label class="text-[9px] font-semibold custom-text-muted">Sueltas</label><input type="number" id="st-loose-${wh.id}" min="0" value="0" class="w-full bg-white dark:bg-darkcard border p-1 rounded text-xs font-bold custom-card"></div>
               </div>
-            </div>
-          `;
+            </div>`;
         });
       }
-
       modal.classList.remove('hidden');
       lucide.createIcons();
     }
 
-    function closeProductModal() {
-      document.getElementById('product-modal').classList.add('hidden');
-    }
+    function closeProductModal() { document.getElementById('product-modal').classList.add('hidden'); }
 
-    function saveProduct(e) {
+    async function saveProduct(e) {
       e.preventDefault();
-      const id = document.getElementById('prod-id').value || `prod_${Date.now()}`;
+      const id = document.getElementById('prod-id').value;
       const name = document.getElementById('prod-name').value.trim();
-      
-      const codesInput = document.getElementById('prod-codes').value.trim();
-      const codesArray = codesInput.split(',').map(c => c.trim()).filter(c => c.length > 0);
-
+      const codesArray = document.getElementById('prod-codes').value.split(',').map(c => c.trim()).filter(c => c.length > 0);
       const boxUnits = parseInt(document.getElementById('prod-box-units').value) || 1;
       const minStock = parseInt(document.getElementById('prod-min-stock').value) || 0;
       
-      // Regular
-      const priceDetal = parseFloat(document.getElementById('prod-price-detal').value) || 0;
-      const priceMayor = parseFloat(document.getElementById('prod-price-mayor').value) || 0;
-      const priceCaja = parseFloat(document.getElementById('prod-price-caja').value) || 0;
-
-      // VIP
-      const priceVipDetal = parseFloat(document.getElementById('prod-price-vip-detal').value) || priceDetal;
-      const priceVipMayor = parseFloat(document.getElementById('prod-price-vip-mayor').value) || priceMayor;
-      const priceVipCaja = parseFloat(document.getElementById('prod-price-vip-caja').value) || priceCaja;
+      const prices = {
+        detal: parseFloat(document.getElementById('prod-price-detal').value) || 0,
+        mayor: parseFloat(document.getElementById('prod-price-mayor').value) || 0,
+        caja: parseFloat(document.getElementById('prod-price-caja').value) || 0,
+        vipDetal: parseFloat(document.getElementById('prod-price-vip-detal').value) || 0,
+        vipMayor: parseFloat(document.getElementById('prod-price-vip-mayor').value) || 0,
+        vipCaja: parseFloat(document.getElementById('prod-price-vip-caja').value) || 0
+      };
 
       const imgPreview = document.getElementById('prod-img-preview');
       const base64Img = imgPreview.dataset.base64 || (imgPreview.querySelector('img') ? imgPreview.querySelector('img').src : null);
 
       const stockData = {};
       appState.warehouses.forEach(wh => {
-        const rack = document.getElementById(`st-rack-${wh.id}`)?.value.trim() || 'A-01';
-        const shelf = document.getElementById(`st-shelf-${wh.id}`)?.value.trim() || 'N1';
-        const boxes = parseInt(document.getElementById(`st-box-${wh.id}`)?.value) || 0;
-        const loose = parseInt(document.getElementById(`st-loose-${wh.id}`)?.value) || 0;
-        stockData[wh.id] = { boxes, loose, rack, shelf };
+        stockData[wh.id] = {
+          rack: document.getElementById(`st-rack-${wh.id}`)?.value.trim() || 'A-01',
+          shelf: document.getElementById(`st-shelf-${wh.id}`)?.value.trim() || 'N1',
+          boxes: parseInt(document.getElementById(`st-box-${wh.id}`)?.value) || 0,
+          loose: parseInt(document.getElementById(`st-loose-${wh.id}`)?.value) || 0
+        };
       });
 
-      const existingIndex = appState.products.findIndex(p => p.id === id);
-      const productObj = {
-        id,
-        name,
-        codes: codesArray.length > 0 ? codesArray : ['S/C'],
-        boxUnits,
-        minStock,
-        prices: { 
-          detal: priceDetal, mayor: priceMayor, caja: priceCaja,
-          vipDetal: priceVipDetal, vipMayor: priceVipMayor, vipCaja: priceVipCaja
-        },
-        image: base64Img,
-        stock: stockData
-      };
+      const productObj = { name, codes: codesArray, boxUnits, minStock, prices, image: base64Img, stock: stockData };
 
-      if (existingIndex >= 0) {
-        appState.products[existingIndex] = productObj;
-      } else {
-        appState.products.unshift(productObj);
-      }
-
-      saveState();
-      closeProductModal();
-      renderAll();
-    }
-
-    function editProduct(id) {
-      openProductModal(id);
-    }
-
-    function deleteProduct(prodId) {
-      if (confirm("¿Estás seguro de eliminar este producto del inventario?")) {
-        appState.products = appState.products.filter(p => p.id !== prodId);
-        appState.cart = appState.cart.filter(item => item.productId !== prodId);
-        saveState();
-        renderAll();
+      try {
+        if (id) {
+          await window.updateDoc(window.doc(window.db, "products", id), productObj);
+        } else {
+          await window.addDoc(window.collection(window.db, "products"), productObj);
+        }
+        closeProductModal();
+      } catch (err) {
+        alert("Error al guardar producto en Firebase: " + err);
       }
     }
 
-    function deleteWarehouse(whId) {
-      if (appState.warehouses.length <= 1) {
-        alert("Debe conservarse al menos 1 almacén en el sistema.");
-        return;
-      }
-      if (confirm("¿Estás seguro de eliminar este almacén y sus registros de stock?")) {
-        appState.warehouses = appState.warehouses.filter(w => w.id !== whId);
-        appState.products.forEach(p => {
-          if (p.stock && p.stock[whId]) delete p.stock[whId];
-        });
-        saveState();
-        renderAll();
+    async function editProduct(id) { openProductModal(id); }
+
+    async function deleteProduct(prodId) {
+      if (confirm("¿Estás seguro de eliminar este producto?")) {
+        try {
+          await window.deleteDoc(window.doc(window.db, "products", prodId));
+          appState.cart = appState.cart.filter(item => item.productId !== prodId);
+        } catch (err) {
+          alert("Error al eliminar: " + err);
+        }
       }
     }
 
     function addToCart(prodId) {
       const prod = appState.products.find(p => p.id === prodId);
       if (!prod) return;
-
-      const defaultPrice = appState.isVipActive ? 0 : prod.prices.detal;
+      const defaultPrice = appState.isVipActive ? (prod.prices?.vipDetal || prod.prices?.detal || 0) : (prod.prices?.detal || 0);
       const existing = appState.cart.find(i => i.productId === prodId && i.priceType === 'detal');
       if (existing) {
         existing.qty++;
       } else {
-        appState.cart.push({ 
-          productId: prodId, 
-          qty: 1, 
-          priceType: 'detal',
-          customVipPrice: appState.isVipActive ? defaultPrice : null 
-        });
+        appState.cart.push({ productId: prodId, qty: 1, priceType: 'detal', customVipPrice: appState.isVipActive ? defaultPrice : null });
       }
-
       renderPOSCart();
       renderHeaderAndCustomization();
     }
@@ -1529,7 +1229,6 @@
     function renderPOSCart() {
       const container = document.getElementById('cart-items-list');
       container.innerHTML = '';
-
       if (appState.cart.length === 0) {
         container.innerHTML = `<p class="text-xs custom-text-muted text-center py-6">El carrito está vacío</p>`;
         document.getElementById('cart-summary-qty').textContent = '0 un.';
@@ -1549,14 +1248,13 @@
         if (appState.isVipActive) {
           unitPrice = item.customVipPrice !== null && item.customVipPrice !== undefined ? parseFloat(item.customVipPrice) : 0;
         } else {
-          if (item.priceType === 'detal') unitPrice = parseFloat(prod.prices.detal);
-          if (item.priceType === 'mayor') unitPrice = parseFloat(prod.prices.mayor);
-          if (item.priceType === 'caja') unitPrice = parseFloat(prod.prices.caja);
+          if (item.priceType === 'detal') unitPrice = parseFloat(prod.prices?.detal || 0);
+          if (item.priceType === 'mayor') unitPrice = parseFloat(prod.prices?.mayor || 0);
+          if (item.priceType === 'caja') unitPrice = parseFloat(prod.prices?.caja || 0);
         }
 
-        const calculatedUnits = item.priceType === 'caja' ? item.qty * prod.boxUnits : item.qty;
+        const calculatedUnits = item.priceType === 'caja' ? item.qty * (prod.boxUnits || 1) : item.qty;
         totalUnitsCount += calculatedUnits;
-
         const subtotal = unitPrice * item.qty;
         grandTotal += subtotal;
 
@@ -1566,7 +1264,6 @@
               <span class="truncate max-w-[150px] custom-text-main">${prod.name}</span>
               <button onclick="removeFromCart(${index})" class="text-red-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
             </div>
-
             <div class="flex items-center justify-between text-[10px] gap-2">
               ${!appState.isVipActive ? `
                 <div class="flex bg-white dark:bg-darkcard border rounded p-0.5 custom-card">
@@ -1580,20 +1277,17 @@
                   <input type="number" step="0.01" value="${item.customVipPrice || 0}" onchange="updateVipPrice(${index}, this.value)" class="w-16 bg-white dark:bg-darkcard border border-purple-400 p-0.5 rounded text-center font-bold text-xs custom-card">
                 </div>
               `}
-
               <div class="flex items-center gap-1 font-bold">
                 <button onclick="updateCartQty(${index}, -1)" class="w-5 h-5 bg-white dark:bg-darkcard border rounded flex items-center justify-center custom-card">-</button>
                 <span class="custom-text-main">${item.qty} ${item.priceType === 'caja' ? 'caj' : 'un'}</span>
                 <button onclick="updateCartQty(${index}, 1)" class="w-5 h-5 bg-white dark:bg-darkcard border rounded flex items-center justify-center custom-card">+</button>
               </div>
             </div>
-
             <div class="flex justify-between items-center text-[10px] border-t border-slate-200 dark:border-darkborder/40 pt-1 font-semibold">
               <span class="custom-text-muted">P. Unit: ${appState.settings.currency}${unitPrice.toFixed(2)}</span>
               <span class="font-black custom-text-main">Subtotal: ${appState.settings.currency}${subtotal.toFixed(2)}</span>
             </div>
-          </div>
-        `;
+          </div>`;
       });
 
       document.getElementById('cart-summary-qty').textContent = `${totalUnitsCount} un.`;
@@ -1602,20 +1296,8 @@
       lucide.createIcons();
     }
 
-    function setCartPriceType(index, priceType) {
-      if (appState.cart[index]) {
-        appState.cart[index].priceType = priceType;
-        renderPOSCart();
-      }
-    }
-
-    function updateVipPrice(index, value) {
-      if (appState.cart[index]) {
-        appState.cart[index].customVipPrice = parseFloat(value) || 0;
-        renderPOSCart();
-      }
-    }
-
+    function setCartPriceType(index, priceType) { if (appState.cart[index]) { appState.cart[index].priceType = priceType; renderPOSCart(); } }
+    function updateVipPrice(index, value) { if (appState.cart[index]) { appState.cart[index].customVipPrice = parseFloat(value) || 0; renderPOSCart(); } }
     function updateCartQty(index, delta) {
       if (appState.cart[index]) {
         appState.cart[index].qty += delta;
@@ -1624,53 +1306,46 @@
         renderHeaderAndCustomization();
       }
     }
+    function removeFromCart(index) { appState.cart.splice(index, 1); renderPOSCart(); renderHeaderAndCustomization(); }
+    function clearCart() { appState.cart = []; renderPOSCart(); renderHeaderAndCustomization(); }
 
-    function removeFromCart(index) {
-      appState.cart.splice(index, 1);
-      renderPOSCart();
-      renderHeaderAndCustomization();
-    }
-
-    function clearCart() {
-      appState.cart = [];
-      renderPOSCart();
-      renderHeaderAndCustomization();
-    }
-
-    function processSale() {
+    async function processSale() {
       if (appState.cart.length === 0) return;
       const whId = document.getElementById('pos-warehouse-select').value;
       const whName = appState.warehouses.find(w => w.id === whId)?.name || "Almacén";
 
       let totalCalcAmount = 0;
 
-      appState.cart.forEach(item => {
+      for (const item of appState.cart) {
         const prod = appState.products.find(p => p.id === item.productId);
+        if (!prod || !prod.stock || !prod.stock[whId]) continue;
         const st = prod.stock[whId];
         let unitsToDeduct = item.qty;
-        if (item.priceType === 'caja') unitsToDeduct = item.qty * prod.boxUnits;
+        if (item.priceType === 'caja') unitsToDeduct = item.qty * (prod.boxUnits || 1);
 
-        let totalUnits = (st.boxes * prod.boxUnits) + st.loose - unitsToDeduct;
-        st.boxes = Math.floor(totalUnits / prod.boxUnits);
-        st.loose = totalUnits % prod.boxUnits;
+        let totalUnits = (st.boxes * (prod.boxUnits || 1)) + st.loose - unitsToDeduct;
+        st.boxes = Math.floor(totalUnits / (prod.boxUnits || 1));
+        st.loose = totalUnits % (prod.boxUnits || 1);
 
         let uPrice = 0;
         if (appState.isVipActive) {
           uPrice = item.customVipPrice !== null && item.customVipPrice !== undefined ? parseFloat(item.customVipPrice) : 0;
         } else {
-          if (item.priceType === 'detal') uPrice = parseFloat(prod.prices.detal);
-          if (item.priceType === 'mayor') uPrice = parseFloat(prod.prices.mayor);
-          if (item.priceType === 'caja') uPrice = parseFloat(prod.prices.caja);
+          if (item.priceType === 'detal') uPrice = parseFloat(prod.prices?.detal || 0);
+          if (item.priceType === 'mayor') uPrice = parseFloat(prod.prices?.mayor || 0);
+          if (item.priceType === 'caja') uPrice = parseFloat(prod.prices?.caja || 0);
         }
         totalCalcAmount += (uPrice * item.qty);
-      });
+
+        // Actualizar stock remoto en Firebase
+        await window.updateDoc(window.doc(window.db, "products", prod.id), { stock: prod.stock });
+      }
 
       const custName = document.getElementById('cust-name').value.trim() || 'Cliente Contado';
       const custDoc = document.getElementById('cust-doc').value.trim() || '-';
       const custPhone = document.getElementById('cust-phone').value.trim() || '-';
 
       const saleRecord = {
-        id: `sale_${Date.now()}`,
         saleNum: `#NE-${Math.floor(1000 + Math.random() * 9000)}`,
         dateISO: new Date().toISOString().slice(0, 10),
         dateTimeStr: new Date().toLocaleDateString('es-ES') + ' ' + new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
@@ -1683,17 +1358,16 @@
         store: Object.assign({}, appState.settings)
       };
 
-      appState.lastCompletedSale = saleRecord;
-      if (!appState.salesHistory) appState.salesHistory = [];
-      appState.salesHistory.unshift(saleRecord);
-
-      saveState();
-      renderAll();
-      showReceiptModal();
-      clearCart();
+      try {
+        await window.addDoc(window.collection(window.db, "sales"), saleRecord);
+        appState.lastCompletedSale = saleRecord;
+        showReceiptModal();
+        clearCart();
+      } catch (err) {
+        alert("Error al registrar la venta en Firebase: " + err);
+      }
     }
 
-    // SALES HISTORY CONTROLLER
     function filterSalesToday() {
       const today = new Date().toISOString().slice(0, 10);
       document.getElementById('sales-date-from').value = today;
@@ -1706,11 +1380,10 @@
       const toVal = document.getElementById('sales-date-to')?.value || '';
       const container = document.getElementById('sales-list-container');
       if (!container) return;
-
       container.innerHTML = '';
 
       if (!appState.salesHistory || appState.salesHistory.length === 0) {
-        container.innerHTML = `<p class="text-xs custom-text-muted text-center py-6 bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder custom-card">No hay ventas registradas aún.</p>`;
+        container.innerHTML = `<p class="text-xs custom-text-muted text-center py-6 bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder custom-card">No hay ventas registradas.</p>`;
         document.getElementById('sales-sum-total').textContent = `${appState.settings.currency}0.00`;
         return;
       }
@@ -1722,16 +1395,14 @@
       });
 
       let sumTotal = 0;
-
       if (filtered.length === 0) {
-        container.innerHTML = `<p class="text-xs custom-text-muted text-center py-6 bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder custom-card">No hay ventas en el rango de fechas seleccionado.</p>`;
+        container.innerHTML = `<p class="text-xs custom-text-muted text-center py-6 bg-white dark:bg-darkcard rounded-2xl border border-slate-200 dark:border-darkborder custom-card">No hay ventas en este rango de fechas.</p>`;
         document.getElementById('sales-sum-total').textContent = `${appState.settings.currency}0.00`;
         return;
       }
 
       filtered.forEach(sale => {
         sumTotal += (sale.totalAmount || 0);
-
         let itemsSummaryStr = sale.items.map(i => {
           const prod = appState.products.find(p => p.id === i.productId);
           return `${i.qty}x ${prod ? prod.name : 'Prod'}`;
@@ -1746,24 +1417,18 @@
               ${sale.isVip ? `<span class="bg-purple-600 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full">VIP</span>` : ''}
               <span class="custom-text-muted text-[10px] font-mono">${sale.dateTimeStr}</span>
             </div>
-
             <div class="flex items-center gap-1">
-              <button onclick="reopenSaleReceipt('${sale.id}')" class="text-slate-400 hover:text-brand-500 p-1" title="Ver Nota"><i data-lucide="printer" class="w-4 h-4"></i></button>
-              <button onclick="deleteSaleRecord('${sale.id}')" class="text-slate-400 hover:text-red-500 p-1" title="Eliminar Venta"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button onclick="reopenSaleReceipt('${sale.id}')" class="text-slate-400 hover:text-brand-500 p-1"><i data-lucide="printer" class="w-4 h-4"></i></button>
+              <button onclick="deleteSaleRecord('${sale.id}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
           </div>
-
           <div class="flex items-center justify-between">
             <div>
-              <p class="font-semibold text-[11px] truncate max-w-[200px] custom-text-main">Cliente: ${sale.customer.name}</p>
+              <p class="font-semibold text-[11px] truncate max-w-[200px] custom-text-main">Cliente: ${sale.customer?.name}</p>
               <p class="text-[10px] custom-text-muted truncate max-w-[250px]">${itemsSummaryStr}</p>
             </div>
-
-            <div class="text-right font-black text-sm text-brand-500">
-              ${appState.settings.currency}${(sale.totalAmount || 0).toFixed(2)}
-            </div>
-          </div>
-        `;
+            <div class="text-right font-black text-sm text-brand-500">${appState.settings.currency}${(sale.totalAmount || 0).toFixed(2)}</div>
+          </div>`;
         container.appendChild(card);
       });
 
@@ -1778,124 +1443,86 @@
       showReceiptModal();
     }
 
-    function deleteSaleRecord(saleId) {
+    async function deleteSaleRecord(saleId) {
       const sale = appState.salesHistory.find(s => s.id === saleId);
       if (!sale) return;
-
-      const returnStock = confirm(`¿Deseas reingresar las unidades de esta venta al stock del almacén (${sale.warehouseName})?`);
-
-      if (returnStock) {
-        sale.items.forEach(item => {
+      if (confirm(`¿Deseas reingresar las unidades de esta venta al stock del almacén (${sale.warehouseName})?`)) {
+        for (const item of sale.items) {
           const prod = appState.products.find(p => p.id === item.productId);
-          if (prod && prod.stock[sale.warehouseId]) {
+          if (prod && prod.stock && prod.stock[sale.warehouseId]) {
             const st = prod.stock[sale.warehouseId];
             let unitsToAdd = item.qty;
-            if (item.priceType === 'caja') unitsToAdd = item.qty * prod.boxUnits;
-
-            let totalUnits = (st.boxes * prod.boxUnits) + st.loose + unitsToAdd;
-            st.boxes = Math.floor(totalUnits / prod.boxUnits);
-            st.loose = totalUnits % prod.boxUnits;
+            if (item.priceType === 'caja') unitsToAdd = item.qty * (prod.boxUnits || 1);
+            let totalUnits = (st.boxes * (prod.boxUnits || 1)) + st.loose + unitsToAdd;
+            st.boxes = Math.floor(totalUnits / (prod.boxUnits || 1));
+            st.loose = totalUnits % (prod.boxUnits || 1);
+            await window.updateDoc(window.doc(window.db, "products", prod.id), { stock: prod.stock });
           }
-        });
+        }
       }
-
-      appState.salesHistory = appState.salesHistory.filter(s => s.id !== saleId);
-      saveState();
-      renderAll();
+      try {
+        await window.deleteDoc(window.doc(window.db, "sales", saleId));
+      } catch (err) {
+        alert("Error al eliminar venta: " + err);
+      }
     }
 
     function showReceiptModal() {
       const sale = appState.lastCompletedSale;
       if (!sale) return;
-
       document.getElementById('receipt-store-name').textContent = sale.store.storeName;
       document.getElementById('receipt-store-doc').textContent = `RIF/DNI: ${sale.store.doc}`;
       document.getElementById('receipt-store-phone').textContent = `Tel: ${sale.store.phone}`;
       document.getElementById('receipt-store-address').textContent = sale.store.address || '';
-
       document.getElementById('receipt-num').textContent = `${sale.saleNum} ${sale.isVip ? '(TARIFAS VIP)' : ''}`;
-      document.getElementById('receipt-date').textContent = sale.dateTimeStr || sale.date;
-
+      document.getElementById('receipt-date').textContent = sale.dateTimeStr || sale.dateISO;
       document.getElementById('receipt-cust-name').textContent = sale.customer.name;
       document.getElementById('receipt-cust-phone').textContent = sale.customer.phone;
 
       const tbody = document.getElementById('receipt-items-tbody');
       tbody.innerHTML = '';
-
       let total = 0;
       sale.items.forEach(item => {
         const prod = appState.products.find(p => p.id === item.productId);
         if (!prod) return;
-
         let unitPrice = 0;
         if (sale.isVip) {
           unitPrice = item.customVipPrice !== null && item.customVipPrice !== undefined ? parseFloat(item.customVipPrice) : 0;
         } else {
-          if (item.priceType === 'detal') unitPrice = parseFloat(prod.prices.detal);
-          if (item.priceType === 'mayor') unitPrice = parseFloat(prod.prices.mayor);
-          if (item.priceType === 'caja') unitPrice = parseFloat(prod.prices.caja);
+          if (item.priceType === 'detal') unitPrice = parseFloat(prod.prices?.detal || 0);
+          if (item.priceType === 'mayor') unitPrice = parseFloat(prod.prices?.mayor || 0);
+          if (item.priceType === 'caja') unitPrice = parseFloat(prod.prices?.caja || 0);
         }
-
         const subtotal = unitPrice * item.qty;
         total += subtotal;
-
         tbody.innerHTML += `
           <tr class="border-b">
             <td class="py-1 px-1 font-bold">${item.qty}</td>
             <td class="py-1 px-1">${prod.name}</td>
             <td class="py-1 px-1 text-right">${sale.store.currency}${unitPrice.toFixed(2)}</td>
             <td class="py-1 px-1 text-right font-bold">${sale.store.currency}${subtotal.toFixed(2)}</td>
-          </tr>
-        `;
+          </tr>`;
       });
-
       document.getElementById('receipt-total-amount').textContent = `${sale.store.currency}${total.toFixed(2)}`;
       document.getElementById('receipt-modal').classList.remove('hidden');
     }
 
-    function closeReceiptModal() {
-      document.getElementById('receipt-modal').classList.add('hidden');
-    }
+    function closeReceiptModal() { document.getElementById('receipt-modal').classList.add('hidden'); }
 
     function downloadReceiptFile() {
       const sale = appState.lastCompletedSale;
       if (!sale) return;
-
-      let text = `====================================\n`;
-      text += `        ${sale.store.storeName.toUpperCase()}\n`;
-      text += `RIF: ${sale.store.doc} | Tel: ${sale.store.phone}\n`;
-      text += `Dirección: ${sale.store.address || ''}\n`;
-      text += `====================================\n`;
-      text += `NOTA DE ENTREGA: ${sale.saleNum}\n`;
-      text += `Fecha: ${sale.dateTimeStr || sale.date}\n`;
-      text += `Cliente: ${sale.customer.name}\n`;
-      text += `------------------------------------\n`;
-
+      let text = `====================================\n        ${sale.store.storeName.toUpperCase()}\nRIF: ${sale.store.doc} | Tel: ${sale.store.phone}\n====================================\nNOTA DE ENTREGA: ${sale.saleNum}\nFecha: ${sale.dateTimeStr}\nCliente: ${sale.customer.name}\n------------------------------------\n`;
       let total = 0;
       sale.items.forEach(item => {
         const prod = appState.products.find(p => p.id === item.productId);
         if (!prod) return;
-
-        let unitPrice = 0;
-        if (sale.isVip) {
-          unitPrice = item.customVipPrice !== null && item.customVipPrice !== undefined ? parseFloat(item.customVipPrice) : 0;
-        } else {
-          if (item.priceType === 'detal') unitPrice = parseFloat(prod.prices.detal);
-          if (item.priceType === 'mayor') unitPrice = parseFloat(prod.prices.mayor);
-          if (item.priceType === 'caja') unitPrice = parseFloat(prod.prices.caja);
-        }
-
-        const subtotal = unitPrice * item.qty;
+        let unitPrice = sale.isVip ? (item.customVipPrice || 0) : parseFloat(prod.prices?.detal || 0);
+        let subtotal = unitPrice * item.qty;
         total += subtotal;
-
-        text += `${item.qty}x ${prod.name}\n`;
-        text += `   P.Unit: ${sale.store.currency}${unitPrice.toFixed(2)}  Subtotal: ${sale.store.currency}${subtotal.toFixed(2)}\n`;
+        text += `${item.qty}x ${prod.name} - ${sale.store.currency}${subtotal.toFixed(2)}\n`;
       });
-
-      text += `------------------------------------\n`;
-      text += `TOTAL GENERAL: ${sale.store.currency}${total.toFixed(2)}\n`;
-      text += `====================================\n`;
-
+      text += `------------------------------------\nTOTAL: ${sale.store.currency}${total.toFixed(2)}\n====================================`;
       const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
       const anchor = document.createElement('a');
       anchor.href = URL.createObjectURL(blob);
@@ -1906,65 +1533,39 @@
     function sendWhatsAppReceipt() {
       const sale = appState.lastCompletedSale;
       if (!sale) return;
-
-      let msg = `*${sale.store.storeName.toUpperCase()}*\n`;
-      msg += `📄 *NOTA DE ENTREGA:* ${sale.saleNum} ${sale.isVip ? '(VIP)' : ''}\n`;
-      msg += `📅 *Fecha:* ${sale.dateTimeStr || sale.date}\n`;
-      msg += `👤 *Cliente:* ${sale.customer.name}\n`;
-      msg += `------------------------------------\n`;
-
+      let msg = `*${sale.store.storeName.toUpperCase()}*\n📄 *NOTA DE ENTREGA:* ${sale.saleNum}\n👤 *Cliente:* ${sale.customer.name}\n------------------------------------\n`;
       let total = 0;
       sale.items.forEach(item => {
         const prod = appState.products.find(p => p.id === item.productId);
         if (!prod) return;
-
-        let unitPrice = 0;
-        if (sale.isVip) {
-          unitPrice = item.customVipPrice !== null && item.customVipPrice !== undefined ? parseFloat(item.customVipPrice) : 0;
-        } else {
-          if (item.priceType === 'detal') unitPrice = parseFloat(prod.prices.detal);
-          if (item.priceType === 'mayor') unitPrice = parseFloat(prod.prices.mayor);
-          if (item.priceType === 'caja') unitPrice = parseFloat(prod.prices.caja);
-        }
-
-        const subtotal = unitPrice * item.qty;
+        let unitPrice = sale.isVip ? (item.customVipPrice || 0) : parseFloat(prod.prices?.detal || 0);
+        let subtotal = unitPrice * item.qty;
         total += subtotal;
-
         msg += `• *${item.qty}x* ${prod.name} - ${sale.store.currency}${subtotal.toFixed(2)}\n`;
       });
-
-      msg += `------------------------------------\n`;
-      msg += `💰 *TOTAL:* *${sale.store.currency}${total.toFixed(2)}*`;
-
+      msg += `------------------------------------\n💰 *TOTAL:* *${sale.store.currency}${total.toFixed(2)}*`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // WAREHOUSE CRUD
     function renderWarehouses() {
       const grid = document.getElementById('warehouses-grid');
       grid.innerHTML = '';
       appState.warehouses.forEach(wh => {
         grid.innerHTML += `
           <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder p-3 rounded-2xl flex items-center justify-between shadow-sm custom-card">
-            <div>
-              <span class="font-extrabold text-xs block custom-text-main">${wh.name}</span>
-              <span class="text-[9px] custom-text-muted font-mono">ID: ${wh.id}</span>
-            </div>
+            <div><span class="font-extrabold text-xs block custom-text-main">${wh.name}</span><span class="text-[9px] custom-text-muted font-mono">ID: ${wh.id}</span></div>
             <div class="flex items-center gap-1">
-              <button onclick="editWarehouse('${wh.id}')" class="text-slate-400 hover:text-brand-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-              <button onclick="deleteWarehouse('${wh.id}')" class="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg" title="Eliminar Almacén"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button onclick="editWarehouse('${wh.id}')" class="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+              <button onclick="deleteWarehouse('${wh.id}')" class="text-red-500 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-darkbg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
-          </div>
-        `;
+          </div>`;
       });
       lucide.createIcons();
     }
 
     function openWarehouseModal(whId = null) {
       const modal = document.getElementById('wh-modal');
-      const form = document.getElementById('wh-form');
-      form.reset();
-
+      document.getElementById('wh-form').reset();
       if (whId) {
         const wh = appState.warehouses.find(w => w.id === whId);
         if (!wh) return;
@@ -1975,90 +1576,65 @@
         document.getElementById('wh-modal-title').textContent = "Crear Almacén";
         document.getElementById('wh-id').value = '';
       }
-
       modal.classList.remove('hidden');
     }
 
-    function closeWarehouseModal() {
-      document.getElementById('wh-modal').classList.add('hidden');
-    }
+    function closeWarehouseModal() { document.getElementById('wh-modal').classList.add('hidden'); }
 
     function saveWarehouse(e) {
       e.preventDefault();
       const id = document.getElementById('wh-id').value || `wh_${Date.now()}`;
       const name = document.getElementById('wh-name').value.trim();
-
       const existingIndex = appState.warehouses.findIndex(w => w.id === id);
       if (existingIndex >= 0) {
         appState.warehouses[existingIndex].name = name;
       } else {
         appState.warehouses.push({ id, name });
         appState.products.forEach(p => {
+          if (!p.stock) p.stock = {};
           if (!p.stock[id]) p.stock[id] = { boxes: 0, loose: 0, rack: "A-01", shelf: "N1" };
         });
       }
-
-      saveState();
+      saveStateRemote();
       closeWarehouseModal();
       renderAll();
     }
 
-    function editWarehouse(id) {
-      openWarehouseModal(id);
-    }
+    function editWarehouse(id) { openWarehouseModal(id); }
 
     function deleteWarehouse(id) {
       if (appState.warehouses.length <= 1) {
         alert("Debe conservarse al menos 1 almacén en el sistema.");
         return;
       }
-      if (confirm(`¿Estás seguro de eliminar el almacén? Todos los registros de stock de este depósito serán eliminados.`)) {
+      if (confirm("¿Estás seguro de eliminar este almacén?")) {
         appState.warehouses = appState.warehouses.filter(w => w.id !== id);
-        appState.products.forEach(p => {
-          if (p.stock) delete p.stock[id];
-        });
-        saveState();
+        appState.products.forEach(p => { if (p.stock) delete p.stock[id]; });
+        saveStateRemote();
         renderAll();
       }
     }
 
-    // SETTINGS LOGIC WITH SCREEN NAMES & PALETTE CUSTOMIZATION
     function renderSettingsForm() {
       document.getElementById('set-store-name').value = appState.settings.storeName;
       document.getElementById('set-store-subtitle').value = appState.settings.storeSubtitle || '';
-      document.getElementById('set-brand-icon').value = appState.settings.brandIcon || 'umbrella';
       document.getElementById('set-store-doc').value = appState.settings.doc;
       document.getElementById('set-store-phone').value = appState.settings.phone;
       document.getElementById('set-store-address').value = appState.settings.address || '';
       document.getElementById('set-store-currency').value = appState.settings.currency;
 
-      const colors = appState.colors || {
-        appBg: "#0f172a",
-        cardBg: "#1e293b",
-        textMain: "#f8fafc",
-        textMuted: "#94a3b8",
-        accent: "#eab308"
-      };
-
+      const colors = appState.colors;
       document.getElementById('set-color-app-bg').value = colors.appBg || "#0f172a";
       document.getElementById('set-color-card-bg').value = colors.cardBg || "#1e293b";
       document.getElementById('set-color-text-main').value = colors.textMain || "#f8fafc";
       document.getElementById('set-color-text-muted').value = colors.textMuted || "#94a3b8";
       document.getElementById('set-color-accent').value = colors.accent || "#eab308";
-
-      const labels = appState.settings.labels || {};
-      document.getElementById('set-lbl-inventory').value = labels.inventory || 'Inventario';
-      document.getElementById('set-lbl-pos').value = labels.pos || 'Punto de Venta (POS)';
-      document.getElementById('set-lbl-sales').value = labels.sales || 'Ventas';
-      document.getElementById('set-lbl-warehouses').value = labels.warehouses || 'Almacenes';
-      document.getElementById('set-lbl-settings').value = labels.settings || 'Configuración';
     }
 
     function saveSettings(e) {
       e.preventDefault();
       appState.settings.storeName = document.getElementById('set-store-name').value.trim();
       appState.settings.storeSubtitle = document.getElementById('set-store-subtitle').value.trim();
-      appState.settings.brandIcon = document.getElementById('set-brand-icon').value;
       appState.settings.doc = document.getElementById('set-store-doc').value.trim();
       appState.settings.phone = document.getElementById('set-store-phone').value.trim();
       appState.settings.address = document.getElementById('set-store-address').value.trim();
@@ -2072,16 +1648,8 @@
         accent: document.getElementById('set-color-accent').value
       };
 
-      appState.settings.labels = {
-        inventory: document.getElementById('set-lbl-inventory').value.trim() || 'Inventario',
-        pos: document.getElementById('set-lbl-pos').value.trim() || 'Punto de Venta (POS)',
-        sales: document.getElementById('set-lbl-sales').value.trim() || 'Ventas',
-        warehouses: document.getElementById('set-lbl-warehouses').value.trim() || 'Almacenes',
-        settings: document.getElementById('set-lbl-settings').value.trim() || 'Configuración'
-      };
-
       applyCustomColors();
-      saveState();
+      saveStateRemote();
       renderAll();
       alert("Configuración y tema visual guardados con éxito.");
     }
@@ -2095,8 +1663,7 @@
     }
 
     function resetData() {
-      if (confirm("¿Restaurar datos de fábrica? Esto reiniciará el inventario y colores.")) {
-        localStorage.removeItem(STORAGE_KEY);
+      if (confirm("¿Restaurar datos? Esto recargará la aplicación.")) {
         location.reload();
       }
     }
