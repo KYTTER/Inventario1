@@ -271,7 +271,7 @@
           <div class="bg-white dark:bg-darkcard border p-3.5 rounded-2xl shadow-lg flex flex-col justify-between min-h-[480px] custom-card">
             <div>
               <div class="flex items-center justify-between border-b pb-2 mb-2">
-                <h2 class="font-bold text-sm flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-4 h-4 text-brand-500"></i> Carrito</h2>
+                <h2 class="font-bold text-sm flex items-center gap-1.5"><i data-lucide="shopping-cart" class="w-4 h-4 text-brand-500"></i> Carrito de Compras</h2>
                 <button onclick="clearCart()" class="text-xs text-red-500 font-bold"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i> Vaciar</button>
               </div>
 
@@ -294,7 +294,8 @@
                 </div>
               </div>
 
-              <div id="cart-items-list" class="space-y-2 max-h-[190px] overflow-y-auto pr-1"></div>
+              <!-- LISTA DE PRODUCTOS EN EL CARRITO CON BOTONES PASTILLA + VIP CON MONTO LIBRE -->
+              <div id="cart-items-list" class="space-y-2 max-h-[260px] overflow-y-auto pr-1"></div>
 
               <div class="mt-3 pt-3 border-t space-y-2">
                 <h3 class="font-bold text-[10px] uppercase text-slate-400">Datos Cliente</h3>
@@ -472,7 +473,11 @@
           <div class="p-2.5 bg-brand-500/10 border rounded-xl"><label class="block font-bold text-brand-500 mb-1">Unidades por Caja *</label><input type="number" id="prod-box-units" min="1" value="24" required class="w-full border p-1 rounded font-black custom-card"></div>
           <div class="p-2.5 bg-red-500/10 border rounded-xl"><label class="block font-bold text-red-500 mb-1">Stock Mínimo *</label><input type="number" id="prod-min-stock" min="0" value="5" required class="w-full border p-1 rounded font-black custom-card"></div>
         </div>
-        <div><label class="block font-semibold text-[10px]">Precio Detal ($)</label><input type="number" step="0.01" id="prod-price-detal" required class="w-full border p-1 rounded font-bold mt-1 custom-card"></div>
+        <div class="grid grid-cols-3 gap-2">
+          <div><label class="block font-semibold text-[10px]">Precio Detal ($)</label><input type="number" step="0.01" id="prod-price-detal" required class="w-full border p-1 rounded font-bold mt-1 custom-card"></div>
+          <div><label class="block font-semibold text-[10px]">Precio Mayor ($)</label><input type="number" step="0.01" id="prod-price-mayor" required class="w-full border p-1 rounded font-bold mt-1 custom-card"></div>
+          <div><label class="block font-semibold text-[10px]">Precio Caja ($)</label><input type="number" step="0.01" id="prod-price-caja" required class="w-full border p-1 rounded font-bold mt-1 custom-card"></div>
+        </div>
         <div><h4 class="font-bold text-[11px] uppercase text-brand-500 mb-1">Stock por Almacén</h4><div id="prod-modal-warehouses-list" class="space-y-2 max-h-40 overflow-y-auto"></div></div>
         <div class="pt-2 border-t flex justify-end gap-2"><button type="button" onclick="closeProductModal()" class="px-3.5 py-1.5 bg-slate-100 dark:bg-darkbg rounded-xl">Cancelar</button><button type="submit" class="px-4 py-1.5 bg-brand-500 text-darkbg font-bold rounded-xl custom-bg-accent">Guardar</button></div>
       </form>
@@ -529,18 +534,15 @@
       products: [], salesHistory: [], cart: [], lastCompletedSale: null
     };
 
-    // SISTEMA DE NOTIFICACIONES FLOTANTES (TOASTS)
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
       if (!container) return;
       const toast = document.createElement('div');
-      
       const bgColor = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white';
       const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-triangle' : 'info';
 
       toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold toast-anim ${bgColor}`;
       toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
-      
       container.appendChild(toast);
       lucide.createIcons();
 
@@ -623,11 +625,8 @@
           .custom-bg-accent { background-color: var(--accent-color) !important; }
         `;
       }
-      if (appState.theme === 'light') {
-        document.documentElement.classList.remove('dark');
-      } else {
-        document.documentElement.classList.add('dark');
-      }
+      if (appState.theme === 'light') document.documentElement.classList.remove('dark');
+      else document.documentElement.classList.add('dark');
     }
 
     function changeThemeMode(mode) {
@@ -637,16 +636,12 @@
       } else {
         appState.colors.appBg = "#0f172a"; appState.colors.cardBg = "#1e293b"; appState.colors.textMain = "#f8fafc"; appState.colors.textMuted = "#94a3b8";
       }
-      applyCustomColors();
-      saveStateRemote();
-      showToast("Tema visual actualizado", "success");
+      applyCustomColors(); saveStateRemote(); showToast("Tema visual actualizado", "success");
     }
 
     function saveThemeColors() {
       appState.colors.accent = document.getElementById('set-color-accent').value;
-      applyCustomColors();
-      saveStateRemote();
-      showToast("¡Colores aplicados con éxito!", "success");
+      applyCustomColors(); saveStateRemote(); showToast("¡Colores aplicados con éxito!", "success");
     }
 
     function saveMenuLabels() {
@@ -654,9 +649,7 @@
       appState.menuLabels.pos = document.getElementById('menu-lbl-pos').value.trim() || "POS";
       appState.menuLabels.sales = document.getElementById('menu-lbl-sales').value.trim() || "Ventas";
       appState.menuLabels.warehouses = document.getElementById('menu-lbl-warehouses').value.trim() || "Almacenes";
-      saveStateRemote();
-      renderAll();
-      showToast("¡Nombres de menú modificados!", "success");
+      saveStateRemote(); renderAll(); showToast("¡Nombres de menú modificados!", "success");
     }
 
     function switchTab(tabId) {
@@ -837,13 +830,24 @@
       const prod = appState.products.find(p => p.id === prodId);
       if (!prod) return;
       const item = appState.cart.find(i => i.productId === prodId);
-      if (item) item.qty++; else appState.cart.push({ productId: prodId, qty: 1 });
+      if (item) {
+        item.qty++;
+      } else {
+        appState.cart.push({
+          productId: prodId,
+          qty: 1,
+          tariffType: 'detal',
+          customVipPrice: parseFloat(prod.prices?.detal || 0)
+        });
+      }
       renderPOSCart(); renderHeader();
     }
 
+    // CARRITO CON BOTONES PASTILLA [Detal] [Mayor] [Caja] [VIP] Y CAMPO LIBRE VIP DE LA JEFA
     function renderPOSCart() {
       const container = document.getElementById('cart-items-list');
       container.innerHTML = '';
+
       if (appState.cart.length === 0) {
         container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">El carrito está vacío</p>`;
         document.getElementById('cart-summary-qty').textContent = '0 un.';
@@ -852,24 +856,96 @@
         document.getElementById('draft-sale-btn').disabled = true;
         return;
       }
-      let total = 0, count = 0;
+
+      let grandTotal = 0, totalUnits = 0;
+
       appState.cart.forEach((item, idx) => {
         const prod = appState.products.find(p => p.id === item.productId);
         if (!prod) return;
-        const sub = (prod.prices?.detal || 0) * item.qty;
-        total += sub; count += item.qty;
+
+        let unitPrice = 0;
+        const prices = prod.prices || {};
+
+        if (item.tariffType === 'detal') unitPrice = parseFloat(prices.detal || 0);
+        else if (item.tariffType === 'mayor') unitPrice = parseFloat(prices.mayor || prices.detal || 0);
+        else if (item.tariffType === 'caja') unitPrice = parseFloat(prices.caja || prices.detal || 0);
+        else if (item.tariffType === 'vip') unitPrice = parseFloat(item.customVipPrice || 0);
+
+        const itemSubtotal = unitPrice * item.qty;
+        grandTotal += itemSubtotal;
+        totalUnits += item.qty;
+
         container.innerHTML += `
-          <div class="bg-slate-50 dark:bg-darkbg p-2 rounded-xl border text-xs flex justify-between items-center custom-card">
-            <div><p class="font-bold custom-text-main">${prod.name}</p><p class="text-[10px] text-slate-400">${item.qty} x $${prod.prices?.detal || 0}</p></div>
-            <button onclick="appState.cart.splice(${idx},1);renderPOSCart();renderHeader();" class="text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+          <div class="bg-slate-50 dark:bg-darkbg p-2.5 rounded-2xl border border-slate-700/60 text-xs space-y-2 custom-card">
+            <div class="flex justify-between items-start font-bold">
+              <span class="custom-text-main text-xs truncate max-w-[180px]">${prod.name}</span>
+              <button onclick="removeFromCart(${idx})" class="text-red-400 hover:text-red-600 p-0.5"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- CONTROLES PASTILLA Y CANTIDAD EN MÓVIL Y DEKSTOP -->
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              
+              <!-- PASTILLAS DE TARIFAS -->
+              <div class="flex items-center gap-0.5 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-700/40">
+                <button onclick="setTariffType(${idx}, 'detal')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'detal' ? 'bg-brand-500 text-slate-950 custom-bg-accent shadow' : 'text-slate-400'}">Detal</button>
+                <button onclick="setTariffType(${idx}, 'mayor')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'mayor' ? 'bg-brand-500 text-slate-950 custom-bg-accent shadow' : 'text-slate-400'}">Mayor</button>
+                <button onclick="setTariffType(${idx}, 'caja')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'caja' ? 'bg-brand-500 text-slate-950 custom-bg-accent shadow' : 'text-slate-400'}">Caja</button>
+                <button onclick="setTariffType(${idx}, 'vip')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'vip' ? 'bg-purple-600 text-white shadow' : 'text-slate-400'}">VIP</button>
+              </div>
+
+              <!-- CANTIDAD [-] 1 [+] -->
+              <div class="flex items-center gap-1 font-bold bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded-xl border border-slate-700/40">
+                <button onclick="updateCartQty(${idx}, -1)" class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white">-</button>
+                <span class="w-6 text-center text-xs custom-text-main">${item.qty}</span>
+                <button onclick="updateCartQty(${idx}, 1)" class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white">+</button>
+              </div>
+            </div>
+
+            <!-- SI ES VIP SE HABILITA CAMPO DE PRECIO INDICADO POR LA JEFA -->
+            ${item.tariffType === 'vip' ? `
+              <div class="flex items-center justify-between gap-2 pt-1 border-t border-purple-500/30">
+                <label class="text-[10px] font-bold text-purple-400 uppercase">Precio VIP ($ / un):</label>
+                <input type="number" step="0.01" value="${item.customVipPrice}" onchange="updateVipPrice(${idx}, this.value)" class="w-24 bg-slate-900 border border-purple-500 text-purple-300 px-2 py-0.5 rounded-lg text-xs font-black text-right focus:outline-none">
+              </div>
+            ` : ''}
+
+            <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-700/40">
+              <span class="custom-text-muted">P.Unit: <strong class="custom-text-main">$${unitPrice.toFixed(2)}</strong></span>
+              <span class="font-extrabold text-brand-500">$${itemSubtotal.toFixed(2)}</span>
+            </div>
           </div>`;
       });
-      document.getElementById('cart-summary-qty').textContent = `${count} un.`;
-      document.getElementById('cart-summary-total').textContent = `$${total.toFixed(2)}`;
+
+      document.getElementById('cart-summary-qty').textContent = `${totalUnits} un.`;
+      document.getElementById('cart-summary-total').textContent = `$${grandTotal.toFixed(2)}`;
       document.getElementById('process-sale-btn').disabled = false;
       document.getElementById('draft-sale-btn').disabled = false;
       lucide.createIcons();
     }
+
+    function setTariffType(index, type) {
+      if (appState.cart[index]) {
+        appState.cart[index].tariffType = type;
+        renderPOSCart();
+      }
+    }
+
+    function updateVipPrice(index, val) {
+      if (appState.cart[index]) {
+        appState.cart[index].customVipPrice = parseFloat(val) || 0;
+        renderPOSCart();
+      }
+    }
+
+    function updateCartQty(index, delta) {
+      if (appState.cart[index]) {
+        appState.cart[index].qty += delta;
+        if (appState.cart[index].qty <= 0) appState.cart.splice(index, 1);
+        renderPOSCart(); renderHeader();
+      }
+    }
+    function removeFromCart(index) { appState.cart.splice(index, 1); renderPOSCart(); renderHeader(); }
+    function clearCart() { appState.cart = []; renderPOSCart(); renderHeader(); }
 
     async function processSale(status = 'completed') {
       if (appState.cart.length === 0) return;
@@ -891,7 +967,18 @@
           }
         }
       }
-      appState.cart.forEach(i => { const p = appState.products.find(x => x.id === i.productId); if (p) total += (p.prices?.detal || 0) * i.qty; });
+
+      appState.cart.forEach(i => {
+        const p = appState.products.find(x => x.id === i.productId);
+        if (p) {
+          let uPrice = 0;
+          if (i.tariffType === 'detal') uPrice = parseFloat(p.prices?.detal || 0);
+          else if (i.tariffType === 'mayor') uPrice = parseFloat(p.prices?.mayor || p.prices?.detal || 0);
+          else if (i.tariffType === 'caja') uPrice = parseFloat(p.prices?.caja || p.prices?.detal || 0);
+          else if (i.tariffType === 'vip') uPrice = parseFloat(i.customVipPrice || 0);
+          total += uPrice * i.qty;
+        }
+      });
 
       const saleNum = `#COMP-${Math.floor(1000 + Math.random() * 9000)}`;
       const sale = {
@@ -989,10 +1076,15 @@
       sale.items.forEach(item => {
         const prod = appState.products.find(p => p.id === item.productId);
         if (!prod) return;
-        const uPrice = prod.prices?.detal || 0;
+        let uPrice = 0;
+        if (item.tariffType === 'detal') uPrice = parseFloat(prod.prices?.detal || 0);
+        else if (item.tariffType === 'mayor') uPrice = parseFloat(prod.prices?.mayor || prod.prices?.detal || 0);
+        else if (item.tariffType === 'caja') uPrice = parseFloat(prod.prices?.caja || prod.prices?.detal || 0);
+        else if (item.tariffType === 'vip') uPrice = parseFloat(item.customVipPrice || 0);
+        
         const sub = uPrice * item.qty;
         total += sub;
-        tbody.innerHTML += `<tr class="border-b"><td class="py-1 px-1 font-bold">${item.qty}</td><td class="py-1 px-1">${prod.name}</td><td class="py-1 px-1 text-right">$${uPrice.toFixed(2)}</td><td class="py-1 px-1 text-right font-bold">$${sub.toFixed(2)}</td></tr>`;
+        tbody.innerHTML += `<tr class="border-b"><td class="py-1 px-1 font-bold">${item.qty}</td><td class="py-1 px-1">${prod.name} (${item.tariffType.toUpperCase()})</td><td class="py-1 px-1 text-right">$${uPrice.toFixed(2)}</td><td class="py-1 px-1 text-right font-bold">$${sub.toFixed(2)}</td></tr>`;
       });
       document.getElementById('receipt-total-amount').textContent = `$${total.toFixed(2)}`;
       document.getElementById('receipt-modal').classList.remove('hidden');
@@ -1060,6 +1152,8 @@
           document.getElementById('prod-box-units').value = p.boxUnits || 24;
           document.getElementById('prod-min-stock').value = p.minStock || 5;
           document.getElementById('prod-price-detal').value = p.prices?.detal || 0;
+          document.getElementById('prod-price-mayor').value = p.prices?.mayor || 0;
+          document.getElementById('prod-price-caja').value = p.prices?.caja || 0;
           appState.warehouses.forEach(w => {
             if (p.stock && p.stock[w.id]) {
               document.getElementById(`st-box-${w.id}`).value = p.stock[w.id].boxes || 0;
@@ -1088,11 +1182,15 @@
         codes: document.getElementById('prod-codes').value.split(',').map(s => s.trim()),
         boxUnits: parseInt(document.getElementById('prod-box-units').value) || 24,
         minStock: parseInt(document.getElementById('prod-min-stock').value) || 5,
-        prices: { detal: parseFloat(document.getElementById('prod-price-detal').value) || 0 }, stock
+        prices: {
+          detal: parseFloat(document.getElementById('prod-price-detal').value) || 0,
+          mayor: parseFloat(document.getElementById('prod-price-mayor').value) || 0,
+          caja: parseFloat(document.getElementById('prod-price-caja').value) || 0
+        }, stock
       };
       
       if (id) {
-        await window.updateDoc(window.doc(window.db, "products", id), prod);
+        await window.updateDoc(window.doc(window.doc(window.db, "products", id)), prod);
         showToast(`¡El artículo "${name}" fue modificado correctamente!`, "success");
       } else {
         await window.addDoc(window.collection(window.db, "products"), prod);
@@ -1127,9 +1225,7 @@
       appState.settings.doc = document.getElementById('set-store-doc').value;
       appState.settings.phone = document.getElementById('set-store-phone').value;
       appState.settings.address = document.getElementById('set-store-address').value;
-      saveStateRemote(); 
-      renderAll(); 
-      showToast("¡Configuración general guardada con éxito!", "success");
+      saveStateRemote(); renderAll(); showToast("¡Configuración general guardada con éxito!", "success");
     }
 
     function renderWarehouses() {
