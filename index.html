@@ -146,7 +146,7 @@
           <i id="login-brand-icon" data-lucide="store" class="w-10 h-10 text-slate-900"></i>
         </div>
         <h2 id="login-title" class="text-xl font-extrabold tracking-tight truncate">IMPORT EXPORT JOTAM Y SHADDAI</h2>
-        <p class="text-xs text-slate-400">Ingresa tus credenciales para acceder</p>
+        <p class="text-xs text-slate-400">Ingresa tus credenciales para acceder (admin / leon)</p>
       </div>
 
       <form onsubmit="handleLogin(event)" class="space-y-4">
@@ -154,14 +154,14 @@
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Usuario</label>
           <div class="relative">
             <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="login-username" required placeholder="Usuario" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="text" id="login-username" required placeholder="admin" value="admin" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Contraseña</label>
           <div class="relative">
             <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="password" id="login-password" required placeholder="••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="password" id="login-password" required placeholder="••••" value="leon" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
         <div id="login-error" class="hidden p-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-xl font-bold text-center">
@@ -200,7 +200,6 @@
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
-          <!-- BOTÓN CARRITO FLOTANTE MÓVIL -->
           <button onclick="toggleCartDrawer()" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1">
             <i data-lucide="shopping-cart" class="w-4 h-4"></i>
             <span id="header-cart-count" class="bg-brand-500 text-darkbg text-[10px] font-black px-1.5 py-0.2 rounded-full custom-bg-accent">0</span>
@@ -237,7 +236,7 @@
 
     <main class="w-full flex-1 p-2 sm:p-4 lg:p-6 box-border animate-fade">
       
-      <!-- INVENTARIO (VISTA CUADRÍCULA POR DEFECTO) -->
+      <!-- INVENTARIO -->
       <section id="tab-inventory" class="tab-content space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
           <div class="flex items-center justify-between">
@@ -286,7 +285,7 @@
         <div id="inventory-pagination" class="bg-white dark:bg-darkcard border p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card w-full"></div>
       </section>
 
-      <!-- PUNTO DE VENTA (POS) CON CATÁLOGO EN CUADRÍCULA Y CARRITO FLOTANTE -->
+      <!-- PUNTO DE VENTA (POS) -->
       <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4 w-full animate-fade">
         <div class="lg:col-span-8 space-y-3">
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
@@ -304,17 +303,15 @@
               <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Búsqueda rápida..." class="w-full pl-8 pr-3 py-1.5 text-xs border rounded-xl custom-card">
             </div>
           </div>
-          <!-- Catálogo en Grid Estilo Cuadrícula -->
           <div id="pos-catalog-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[600px] overflow-y-auto pr-1"></div>
         </div>
 
-        <!-- Panel de Carrito de Escritorio (Oculto en Celular, visible en PC grande) -->
         <div class="hidden lg:block lg:col-span-4 space-y-3">
           <div id="desktop-cart-container" class="bg-white dark:bg-darkcard border p-3.5 rounded-2xl shadow-lg flex flex-col justify-between min-h-[520px] custom-card"></div>
         </div>
       </section>
 
-      <!-- VENTAS Y ARQUEO DIARIO -->
+      <!-- VENTAS -->
       <section id="tab-sales" class="tab-content hidden space-y-3 w-full animate-fade">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-3 custom-card">
           <div class="flex flex-wrap items-center justify-between gap-2">
@@ -439,7 +436,7 @@
       </section>
     </main>
 
-    <!-- BARRA INFERIOR FLOTANTE DE POS (PARA ACCESO RÁPIDO AL CARRITO EN CELULAR) -->
+    <!-- BARRA INFERIOR FLOTANTE DE POS -->
     <div id="mobile-cart-bar" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-700 p-3 flex items-center justify-between shadow-2xl lg:hidden hidden">
       <div class="flex items-center gap-2">
         <div class="bg-brand-500 text-slate-950 font-black px-2.5 py-1 rounded-xl text-xs" id="mob-cart-count">0 un.</div>
@@ -455,9 +452,7 @@
 
     <!-- PANEL DESPLEGABLE (DRAWER) DEL CARRITO PARA CELULARES -->
     <div id="cart-drawer" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex justify-end hidden animate-fade">
-      <div id="cart-drawer-content" class="bg-white dark:bg-darkcard w-full max-w-md h-full shadow-2xl flex flex-col justify-between p-4 custom-card overflow-y-auto">
-        <!-- Contenido dinámico del carrito -->
-      </div>
+      <div id="cart-drawer-content" class="bg-white dark:bg-darkcard w-full max-w-md h-full shadow-2xl flex flex-col justify-between p-4 custom-card overflow-y-auto"></div>
     </div>
 
     <footer class="bg-white/80 dark:bg-darkcard/80 border-t py-2 px-4 text-center text-[11px] text-slate-400 no-print">
@@ -559,7 +554,7 @@
     let searchCollapsed = false;
     let appState = {
       theme: 'dark',
-      inventoryViewMode: 'grid', // VISTA CUADRÍCULA POR DEFECTO COMO SOLICITASTE
+      inventoryViewMode: 'grid',
       currentPage: 1,
       itemsPerPage: 12,
       colors: { appBg: "#0f172a", cardBg: "#1e293b", textMain: "#f8fafc", textMuted: "#94a3b8", accent: "#eab308" },
@@ -613,7 +608,10 @@
           if (remoteData.settings) appState.settings = remoteData.settings;
           if (remoteData.warehouses) appState.warehouses = remoteData.warehouses;
           if (remoteData.colors) appState.colors = remoteData.colors;
-          if (remoteData.users) appState.users = remoteData.users;
+          // Garantizar que siempre existan usuarios válidos para el login
+          if (remoteData.users && remoteData.users.length > 0) {
+            appState.users = remoteData.users;
+          }
           if (remoteData.categories) appState.categories = remoteData.categories;
           if (remoteData.menuLabels) appState.menuLabels = remoteData.menuLabels;
           if (remoteData.theme) appState.theme = remoteData.theme;
@@ -657,7 +655,7 @@
         } else {
           document.getElementById('login-error').classList.remove('hidden');
         }
-      }, 400);
+      }, 300);
     }
 
     function handleLogout() { location.reload(); }
@@ -1050,7 +1048,6 @@
       filtered.forEach(prod => {
         const st = prod.stock[whId];
         const total = (st.boxes * (prod.boxUnits || 1)) + st.loose;
-        // Tarjetas estilo cuadrícula moderna para POS
         grid.innerHTML += `
           <div onclick="addToCart('${prod.id}')" class="bg-white dark:bg-darkcard border p-2.5 rounded-2xl flex flex-col justify-between shadow-sm cursor-pointer hover:border-brand-500 transition-all custom-card">
             <div>
@@ -1101,7 +1098,6 @@
         grandTotal += unitPrice * item.qty;
       });
 
-      // Actualizar barra flotante móvil
       const mobBar = document.getElementById('mobile-cart-bar');
       if (appState.cart.length > 0) {
         mobBar.classList.remove('hidden');
@@ -1112,7 +1108,6 @@
         document.getElementById('cart-drawer').classList.add('hidden');
       }
 
-      // Renderizar tanto en desktop como en el Drawer flotante
       const cartHtml = buildCartHTML(grandTotal, totalUnits);
       
       const desktopContainer = document.getElementById('desktop-cart-container');
@@ -1582,7 +1577,7 @@
 
     function renderWarehouses() {
       const grid = document.getElementById('warehouses-grid');
-      if !== null && grid) {
+      if (grid) {
         grid.innerHTML = appState.warehouses.map(w => `<div class="bg-white dark:bg-darkcard border p-3 rounded-2xl flex justify-between items-center custom-card"><span class="font-bold text-xs">${w.name}</span></div>`).join('');
       }
     }
