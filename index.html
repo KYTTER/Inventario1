@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -48,18 +49,22 @@
       appId: "1:851977920346:web:74d0bc894481e226661d63"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.db = db;
-    window.collection = collection;
-    window.addDoc = addDoc;
-    window.getDocs = getDocs;
-    window.updateDoc = updateDoc;
-    window.deleteDoc = deleteDoc;
-    window.doc = doc;
-    window.onSnapshot = onSnapshot;
-    window.setDoc = setDoc;
+    let app, db;
+    try {
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      window.db = db;
+      window.collection = collection;
+      window.addDoc = addDoc;
+      window.getDocs = getDocs;
+      window.updateDoc = updateDoc;
+      window.deleteDoc = deleteDoc;
+      window.doc = doc;
+      window.onSnapshot = onSnapshot;
+      window.setDoc = setDoc;
+    } catch (e) {
+      console.warn("Modo local in-memory activado o inicialización de Firebase omitida:", e);
+    }
 
     window.dispatchEvent(new Event('firebase-ready'));
   </script>
@@ -71,6 +76,9 @@
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --accent-color: #eab308;
+      --input-bg: #0f172a;
+      --input-text: #ffffff;
+      --input-border: #334155;
     }
 
     body {
@@ -89,14 +97,14 @@
     .custom-text-muted { color: var(--text-muted) !important; }
     .custom-bg-accent { background-color: var(--accent-color) !important; }
     
-    /* CORRECCIÓN: Inputs visibles con fondo claro/oscuro adecuado y texto nítido */
+    /* GARANTÍA DE VISIBILIDAD DE NUMEROS Y TEXTO EN TODOS LOS INPUTS */
     input, select, textarea {
-      background-color: #0b1120 !important;
-      color: #ffffff !important;
-      border-color: #334155 !important;
+      background-color: var(--input-bg) !important;
+      color: var(--input-text) !important;
+      border-color: var(--input-border) !important;
     }
     input::placeholder, textarea::placeholder {
-      color: #94a3b8 !important;
+      color: var(--text-muted) !important;
     }
 
     ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -121,16 +129,17 @@
 </head>
 <body class="min-h-screen transition-colors duration-200 flex flex-col w-full relative">
 
-  <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
+  <!-- NOTIFICACIONES FLOTANTES -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-  <!-- PANTALLA DE LOGIN -->
+  <!-- PANTALLA DE LOGIN CON FONDO CONFIGURABLE -->
   <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen">
-    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
+    <div id="login-bg-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
     <div></div>
     <div class="relative w-full max-w-sm sm:max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100 mx-auto">
       <div class="text-center space-y-2">
         <div id="login-logo-container" class="mx-auto w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden">
+          <img id="login-logo-img" src="" alt="Logo" class="w-full h-full object-cover hidden">
           <i id="login-brand-icon" data-lucide="store" class="w-10 h-10 text-slate-900"></i>
         </div>
         <h2 id="login-title" class="text-xl font-extrabold tracking-tight truncate">IMPORT EXPORT JOTAM Y SHADDAI</h2>
@@ -142,14 +151,14 @@
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Usuario</label>
           <div class="relative">
             <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="login-username" required placeholder="Usuario" class="w-full pl-9 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="text" id="login-username" required placeholder="Usuario" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Contraseña</label>
           <div class="relative">
             <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="password" id="login-password" required placeholder="••••" class="w-full pl-9 pr-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="password" id="login-password" required placeholder="••••" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
         <div id="login-error" class="hidden p-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-xl font-bold text-center">
@@ -175,8 +184,9 @@
     <header class="sticky top-0 z-40 bg-white/95 dark:bg-darkcard/95 backdrop-blur border-b border-slate-200 dark:border-darkborder shadow-sm custom-card w-full">
       <div class="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 min-w-0">
-          <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-2 rounded-xl font-extrabold flex items-center justify-center shadow-md custom-bg-accent overflow-hidden w-9 h-9 shrink-0">
-            <i data-lucide="store" class="w-5 h-5"></i>
+          <div id="header-brand-icon-bg" class="bg-brand-500 text-darkbg p-1 rounded-xl font-extrabold flex items-center justify-center shadow-md custom-bg-accent overflow-hidden w-9 h-9 shrink-0">
+            <img id="header-logo-img" src="" alt="Logo" class="w-full h-full object-cover rounded-lg hidden">
+            <i id="header-brand-icon" data-lucide="store" class="w-5 h-5"></i>
           </div>
           <div class="min-w-0">
             <h1 class="font-extrabold text-sm sm:text-base leading-none truncate">
@@ -223,21 +233,21 @@
 
     <main class="w-full flex-1 p-2 sm:p-4 lg:p-6 box-border">
       
-      <!-- INVENTARIO -->
+      <!-- TAB INVENTARIO -->
       <section id="tab-inventory" class="tab-content space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
           <div class="relative">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
-            <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Nombre, Código o Modelo..." class="w-full pl-9 pr-8 py-2 bg-slate-50 dark:bg-darkbg border rounded-xl text-xs font-medium custom-card">
+            <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Nombre, Código o Modelo..." class="w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium custom-card">
             <button onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-xs">
-            <select id="inventory-cat-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
+            <select id="inventory-cat-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
               <option value="all">Categoría: Todas</option>
             </select>
-            <select id="inventory-wh-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card"></select>
-            <select id="inventory-status-filter" onchange="renderInventory()" class="bg-slate-50 dark:bg-darkbg border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
+            <select id="inventory-wh-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card"></select>
+            <select id="inventory-status-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
               <option value="all">Stock: Todos los estados</option>
               <option value="complete">📦 Completo (Solo Cajas llenas)</option>
               <option value="loose">🧩 Con Unidades Sueltas</option>
@@ -256,22 +266,22 @@
         <div id="inventory-pagination" class="bg-white dark:bg-darkcard border p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card w-full"></div>
       </section>
 
-      <!-- PUNTO DE VENTA (POS) -->
+      <!-- TAB PUNTO DE VENTA (POS) -->
       <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
         <div class="lg:col-span-7 space-y-3">
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <h2 class="font-bold text-xs sm:text-sm flex items-center gap-1.5"><i data-lucide="grid" class="w-4 h-4 text-brand-500"></i> Catálogo de Venta</h2>
               <div class="flex items-center gap-2">
-                <select id="pos-category-select" onchange="renderPOSCatalog()" class="bg-slate-50 dark:bg-darkbg border text-xs font-bold px-2 py-1 rounded-lg custom-card">
+                <select id="pos-category-select" onchange="renderPOSCatalog()" class="border text-xs font-bold px-2 py-1 rounded-lg custom-card">
                   <option value="all">Todas las Categorías</option>
                 </select>
-                <select id="pos-warehouse-select" onchange="renderPOSCatalog()" class="bg-slate-50 dark:bg-darkbg border text-xs font-bold px-2 py-1 rounded-lg custom-card"></select>
+                <select id="pos-warehouse-select" onchange="renderPOSCatalog()" class="border text-xs font-bold px-2 py-1 rounded-lg custom-card"></select>
               </div>
             </div>
             <div class="relative">
               <i data-lucide="scan" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
-              <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Búsqueda rápida..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-darkbg border rounded-xl custom-card">
+              <input type="text" id="pos-search" oninput="renderPOSCatalog()" placeholder="Búsqueda rápida..." class="w-full pl-8 pr-3 py-1.5 text-xs border rounded-xl custom-card">
             </div>
           </div>
           <div id="pos-catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[500px] overflow-y-auto pr-1"></div>
@@ -285,15 +295,15 @@
                 <button onclick="clearCart()" class="text-xs text-red-500 font-bold"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i> Vaciar</button>
               </div>
 
-              <div class="mb-3 bg-slate-50 dark:bg-darkbg p-2.5 rounded-xl border text-xs space-y-2 custom-card">
+              <div class="mb-3 p-2.5 rounded-xl border text-xs space-y-2 custom-card">
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="block font-bold text-[10px] text-slate-400 uppercase mb-1">Vendedora</label>
-                    <select id="pos-seller-select" class="w-full bg-white dark:bg-darkcard border px-2 py-1.5 rounded-xl text-xs font-semibold custom-card"></select>
+                    <select id="pos-seller-select" class="w-full border px-2 py-1.5 rounded-xl text-xs font-semibold custom-card"></select>
                   </div>
                   <div>
                     <label class="block font-bold text-[10px] text-slate-400 uppercase mb-1">Método de Pago</label>
-                    <select id="pos-payment-method" class="w-full bg-white dark:bg-darkcard border px-2 py-1.5 rounded-xl text-xs font-extrabold text-brand-500 custom-card">
+                    <select id="pos-payment-method" class="w-full border px-2 py-1.5 rounded-xl text-xs font-extrabold text-brand-500 custom-card">
                       <option value="Efectivo">💵 Efectivo</option>
                       <option value="Yape">📱 Yape</option>
                       <option value="Plin">📱 Plin</option>
@@ -304,16 +314,15 @@
                 </div>
               </div>
 
-              <!-- LISTA DE PRODUCTOS EN EL CARRITO CON BOTONES PASTILLA + VIP CON MONTO LIBRE -->
               <div id="cart-items-list" class="space-y-2 max-h-[260px] overflow-y-auto pr-1"></div>
 
               <div class="mt-3 pt-3 border-t space-y-2">
                 <h3 class="font-bold text-[10px] uppercase text-slate-400">Datos Cliente</h3>
                 <div class="grid grid-cols-2 gap-1.5">
-                  <input type="text" id="cust-name" placeholder="Cliente" class="bg-slate-50 dark:bg-darkbg border px-2 py-1 rounded-lg text-xs custom-card">
-                  <input type="text" id="cust-doc" placeholder="DNI/RIF" class="bg-slate-50 dark:bg-darkbg border px-2 py-1 rounded-lg text-xs custom-card">
-                  <input type="text" id="cust-phone" placeholder="WhatsApp" class="bg-slate-50 dark:bg-darkbg border px-2 py-1 rounded-lg text-xs custom-card">
-                  <input type="text" id="cust-address" placeholder="Dirección" class="bg-slate-50 dark:bg-darkbg border px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-name" placeholder="Cliente" class="border px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-doc" placeholder="DNI/RIF" class="border px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-phone" placeholder="WhatsApp" class="border px-2 py-1 rounded-lg text-xs custom-card">
+                  <input type="text" id="cust-address" placeholder="Dirección" class="border px-2 py-1 rounded-lg text-xs custom-card">
                 </div>
               </div>
             </div>
@@ -336,7 +345,7 @@
         </div>
       </section>
 
-      <!-- VENTAS -->
+      <!-- TAB VENTAS -->
       <section id="tab-sales" class="tab-content hidden space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-3 custom-card">
           <div class="flex flex-wrap items-center justify-between gap-2">
@@ -349,14 +358,14 @@
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             <div>
               <label class="block text-[10px] text-slate-400 mb-0.5">Desde:</label>
-              <input type="date" id="sales-date-from" onchange="renderSalesHistory()" class="w-full bg-slate-50 dark:bg-darkbg border p-1.5 rounded-xl custom-card">
+              <input type="date" id="sales-date-from" onchange="renderSalesHistory()" class="w-full border p-1.5 rounded-xl custom-card">
             </div>
             <div>
               <label class="block text-[10px] text-slate-400 mb-0.5">Hasta:</label>
-              <input type="date" id="sales-date-to" onchange="renderSalesHistory()" class="w-full bg-slate-50 dark:bg-darkbg border p-1.5 rounded-xl custom-card">
+              <input type="date" id="sales-date-to" onchange="renderSalesHistory()" class="w-full border p-1.5 rounded-xl custom-card">
             </div>
             <div class="col-span-2 flex items-end">
-              <div class="w-full bg-slate-50 dark:bg-darkbg border px-3 py-1.5 rounded-xl flex items-center justify-between font-extrabold text-xs custom-card">
+              <div class="w-full border px-3 py-1.5 rounded-xl flex items-center justify-between font-extrabold text-xs custom-card">
                 <span class="text-slate-400">Total Recaudado:</span>
                 <span id="sales-sum-total" class="text-brand-500">$0.00</span>
               </div>
@@ -366,7 +375,7 @@
         <div id="sales-list-container" class="space-y-2 w-full"></div>
       </section>
 
-      <!-- ALMACENES -->
+      <!-- TAB ALMACENES -->
       <section id="tab-warehouses" class="tab-content hidden space-y-3 w-full">
         <div class="flex items-center justify-between">
           <h2 class="font-extrabold text-base">Almacenes y Depósitos</h2>
@@ -375,17 +384,40 @@
         <div id="warehouses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </section>
 
-      <!-- CONFIGURACIÓN -->
+      <!-- TAB CONFIGURACIÓN -->
       <section id="tab-settings" class="tab-content hidden space-y-3 w-full">
         <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border p-4 rounded-2xl shadow-sm space-y-4 custom-card">
           <h2 class="font-bold text-base border-b pb-2 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-brand-500"></i> Configuración General y Apariencia</h2>
 
-          <div class="p-3 bg-slate-50 dark:bg-darkbg border rounded-xl space-y-3 custom-card">
+          <!-- LOGO DE LA EMPRESA -->
+          <div class="p-3 border rounded-xl space-y-3 custom-card">
+            <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="image" class="w-4 h-4"></i> Logo de la Empresa</h3>
+            <div>
+              <label class="block font-semibold text-[10px] mb-1">Subir Logo (Archivo Imagen)</label>
+              <input type="file" id="set-logo-input" accept="image/*" onchange="handleLogoUpload(event)" class="w-full text-xs text-slate-400">
+            </div>
+            <div>
+              <label class="block font-semibold text-[10px] mb-1">O Pegar URL de la Imagen del Logo</label>
+              <input type="text" id="set-logo-url" placeholder="https://..." onchange="handleLogoUrlChange(this.value)" class="w-full border p-2 rounded-xl text-xs font-medium custom-card">
+            </div>
+          </div>
+
+          <!-- FONDO DE LOGIN -->
+          <div class="p-3 border rounded-xl space-y-3 custom-card">
+            <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="monitor" class="w-4 h-4"></i> Fondo de la Pantalla de Login</h3>
+            <div>
+              <label class="block font-semibold text-[10px] mb-1">URL de la Imagen de Fondo</label>
+              <input type="text" id="set-login-bg-url" placeholder="https://..." onchange="handleLoginBgUrlChange(this.value)" class="w-full border p-2 rounded-xl text-xs font-medium custom-card">
+            </div>
+          </div>
+
+          <!-- TEMA Y COLORES -->
+          <div class="p-3 border rounded-xl space-y-3 custom-card">
             <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="palette" class="w-4 h-4"></i> Tema y Colores de Interfaz</h3>
             <div class="grid grid-cols-2 gap-2">
               <div>
                 <label class="block font-semibold text-[10px] mb-1">Modo Visual</label>
-                <select id="set-theme-mode" onchange="changeThemeMode(this.value)" class="w-full bg-white dark:bg-darkcard border p-2 rounded-xl text-xs font-bold custom-card">
+                <select id="set-theme-mode" onchange="changeThemeMode(this.value)" class="w-full border p-2 rounded-xl text-xs font-bold custom-card">
                   <option value="dark">🌙 Tema Oscuro</option>
                   <option value="light">☀️ Tema Claro</option>
                 </select>
@@ -398,7 +430,7 @@
             <button onclick="saveThemeColors()" class="w-full bg-slate-200 dark:bg-darkhover text-xs font-bold py-1.5 rounded-xl">Aplicar Colores</button>
           </div>
 
-          <div class="p-3 bg-slate-50 dark:bg-darkbg border rounded-xl space-y-3 custom-card">
+          <div class="p-3 border rounded-xl space-y-3 custom-card">
             <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="menu" class="w-4 h-4"></i> Nombres de las Pestañas del Menú</h3>
             <div class="grid grid-cols-2 gap-2 text-xs">
               <div><label class="text-[10px]">Inventario</label><input type="text" id="menu-lbl-inventory" value="Inventario" class="w-full border p-1.5 rounded-xl custom-card"></div>
@@ -409,7 +441,7 @@
             <button onclick="saveMenuLabels()" class="w-full bg-slate-200 dark:bg-darkhover text-xs font-bold py-1.5 rounded-xl">Actualizar Menú</button>
           </div>
 
-          <div class="p-3 bg-slate-50 dark:bg-darkbg border rounded-xl space-y-3 custom-card">
+          <div class="p-3 border rounded-xl space-y-3 custom-card">
             <div class="flex items-center justify-between">
               <h3 class="font-extrabold text-xs text-brand-500"><i data-lucide="tags" class="w-4 h-4 inline"></i> Categorías</h3>
               <button onclick="openCategoryModal()" class="bg-brand-500 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase custom-bg-accent">+ Nueva</button>
@@ -498,6 +530,9 @@
     <div class="bg-white text-slate-900 border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       <div id="print-area" class="p-6 bg-white space-y-3 text-xs">
         <div class="text-center border-b pb-3 space-y-1">
+          <div id="receipt-logo-container" class="mx-auto w-12 h-12 mb-1 flex items-center justify-center hidden">
+            <img id="receipt-logo-img" src="" alt="Logo" class="max-h-full max-w-full object-contain">
+          </div>
           <h2 id="receipt-store-name" class="font-black text-base uppercase text-slate-900">IMPORT EXPORT JOTAM Y SHADDAI</h2>
           <p id="receipt-store-doc" class="text-[10px] text-slate-600">DNI / RIF: J-40982112-9</p>
           <p id="receipt-store-phone" class="text-[10px] text-slate-600">Teléfono: 945473118</p>
@@ -537,10 +572,17 @@
       settings: {
         storeName: "IMPORT EXPORT JOTAM Y SHADDAI",
         storeSubtitle: "Jr. Andahuaylas N 955 Int. 72 y 76 - Lima",
-        doc: "J-40982112-9", phone: "945473118", address: "Jr. Andahuaylas N 955 Int. 72 y 76 - Lima", currency: "$"
+        doc: "J-40982112-9", phone: "945473118", address: "Jr. Andahuaylas N 955 Int. 72 y 76 - Lima", currency: "$",
+        logoUrl: "", loginBgUrl: ""
       },
-      users: [{ id: "u_1", username: "admin", password: "leon", role: "admin" }, { id: "u_2", username: "vendedora", password: "123", role: "seller" }],
-      warehouses: [{ id: "wh_1", name: "Almacén Principal" }, { id: "wh_2", name: "Depósito Secundario" }],
+      users: [
+        { id: "u_1", username: "admin", password: "leon", role: "admin" },
+        { id: "u_2", username: "vendedora", password: "123", role: "seller" }
+      ],
+      warehouses: [
+        { id: "wh_1", name: "Almacén Principal" },
+        { id: "wh_2", name: "Depósito Secundario" }
+      ],
       products: [], salesHistory: [], cart: [], lastCompletedSale: null
     };
 
@@ -566,6 +608,11 @@
     window.addEventListener('DOMContentLoaded', () => { applyCustomColors(); lucide.createIcons(); });
 
     window.addEventListener('firebase-ready', () => {
+      if (!window.db) {
+        renderAll();
+        return;
+      }
+
       window.onSnapshot(window.doc(window.db, "app_data", "main_state"), (docSnap) => {
         if (docSnap.exists()) {
           const remoteData = docSnap.data();
@@ -616,29 +663,80 @@
     function handleLogout() { location.reload(); }
 
     function saveStateRemote() {
-      window.setDoc(window.doc(window.db, "app_data", "main_state"), {
-        settings: appState.settings, warehouses: appState.warehouses, colors: appState.colors,
-        users: appState.users, categories: appState.categories, menuLabels: appState.menuLabels, theme: appState.theme
-      }).catch(err => console.error(err));
+      if (window.db) {
+        window.setDoc(window.doc(window.db, "app_data", "main_state"), {
+          settings: appState.settings, warehouses: appState.warehouses, colors: appState.colors,
+          users: appState.users, categories: appState.categories, menuLabels: appState.menuLabels, theme: appState.theme
+        }).catch(err => console.error(err));
+      }
     }
 
     function applyCustomColors() {
       const colors = appState.colors;
+      const isLight = appState.theme === 'light';
+
+      const inputBg = isLight ? "#ffffff" : "#0f172a";
+      const inputText = isLight ? "#0f172a" : "#ffffff";
+      const inputBorder = isLight ? "#cbd5e1" : "#334155";
+
       const styleTag = document.getElementById('custom-theme-styles');
       if (styleTag) {
         styleTag.innerHTML = `
-          :root { --app-bg: ${colors.appBg}; --card-bg: ${colors.cardBg}; --text-main: ${colors.textMain}; --text-muted: ${colors.textMuted}; --accent-color: ${colors.accent}; }
+          :root {
+            --app-bg: ${colors.appBg};
+            --card-bg: ${colors.cardBg};
+            --text-main: ${colors.textMain};
+            --text-muted: ${colors.textMuted};
+            --accent-color: ${colors.accent};
+            --input-bg: ${inputBg};
+            --input-text: ${inputText};
+            --input-border: ${inputBorder};
+          }
           body { background-color: var(--app-bg) !important; color: var(--text-main) !important; }
           .custom-card { background-color: var(--card-bg) !important; color: var(--text-main) !important; }
           .custom-text-main { color: var(--text-main) !important; }
           .custom-text-muted { color: var(--text-muted) !important; }
           .custom-bg-accent { background-color: var(--accent-color) !important; }
-          input, select, textarea { background-color: #0b1120 !important; color: #ffffff !important; border-color: #334155 !important; }
-          input::placeholder, textarea::placeholder { color: #94a3b8 !important; }
+          input, select, textarea { background-color: var(--input-bg) !important; color: var(--input-text) !important; border-color: var(--input-border) !important; }
+          input::placeholder, textarea::placeholder { color: var(--text-muted) !important; }
         `;
       }
-      if (appState.theme === 'light') document.documentElement.classList.remove('dark');
+
+      if (isLight) document.documentElement.classList.remove('dark');
       else document.documentElement.classList.add('dark');
+
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen) {
+        if (appState.settings.loginBgUrl) {
+          loginScreen.style.backgroundImage = `url('${appState.settings.loginBgUrl}')`;
+        } else {
+          loginScreen.style.backgroundImage = '';
+        }
+      }
+
+      const logoUrl = appState.settings.logoUrl;
+
+      const headerLogoImg = document.getElementById('header-logo-img');
+      const headerBrandIcon = document.getElementById('header-brand-icon');
+      if (logoUrl) {
+        headerLogoImg.src = logoUrl;
+        headerLogoImg.classList.remove('hidden');
+        if (headerBrandIcon) headerBrandIcon.classList.add('hidden');
+      } else {
+        headerLogoImg.classList.add('hidden');
+        if (headerBrandIcon) headerBrandIcon.classList.remove('hidden');
+      }
+
+      const loginLogoImg = document.getElementById('login-logo-img');
+      const loginBrandIcon = document.getElementById('login-brand-icon');
+      if (logoUrl) {
+        loginLogoImg.src = logoUrl;
+        loginLogoImg.classList.remove('hidden');
+        if (loginBrandIcon) loginBrandIcon.classList.add('hidden');
+      } else {
+        loginLogoImg.classList.add('hidden');
+        if (loginBrandIcon) loginBrandIcon.classList.remove('hidden');
+      }
     }
 
     function changeThemeMode(mode) {
@@ -662,6 +760,35 @@
       appState.menuLabels.sales = document.getElementById('menu-lbl-sales').value.trim() || "Ventas";
       appState.menuLabels.warehouses = document.getElementById('menu-lbl-warehouses').value.trim() || "Almacenes";
       saveStateRemote(); renderAll(); showToast("¡Nombres de menú modificados!", "success");
+    }
+
+    function handleLogoUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          appState.settings.logoUrl = e.target.result;
+          document.getElementById('set-logo-url').value = '';
+          applyCustomColors();
+          saveStateRemote();
+          showToast("Logo de empresa guardado con éxito", "success");
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleLogoUrlChange(url) {
+      appState.settings.logoUrl = url.trim();
+      applyCustomColors();
+      saveStateRemote();
+      showToast("URL del logo guardada con éxito", "success");
+    }
+
+    function handleLoginBgUrlChange(url) {
+      appState.settings.loginBgUrl = url.trim();
+      applyCustomColors();
+      saveStateRemote();
+      showToast("Fondo de pantalla de Login guardado", "success");
     }
 
     function switchTab(tabId) {
@@ -887,7 +1014,7 @@
         totalUnits += item.qty;
 
         container.innerHTML += `
-          <div class="bg-slate-50 dark:bg-darkbg p-2.5 rounded-2xl border border-slate-700/60 text-xs space-y-2 custom-card">
+          <div class="p-2.5 rounded-2xl border text-xs space-y-2 custom-card">
             <div class="flex justify-between items-start font-bold">
               <span class="custom-text-main text-xs truncate max-w-[180px]">${prod.name}</span>
               <button onclick="removeFromCart(${idx})" class="text-red-400 hover:text-red-600 p-0.5"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -911,7 +1038,7 @@
             ${item.tariffType === 'vip' ? `
               <div class="flex items-center justify-between gap-2 pt-1 border-t border-purple-500/30">
                 <label class="text-[10px] font-bold text-purple-400 uppercase">Precio VIP ($ / un):</label>
-                <input type="number" step="0.01" value="${item.customVipPrice}" onchange="updateVipPrice(${idx}, this.value)" class="w-24 bg-slate-900 border border-purple-500 text-purple-300 px-2 py-0.5 rounded-lg text-xs font-black text-right focus:outline-none">
+                <input type="number" step="0.01" value="${item.customVipPrice}" onchange="updateVipPrice(${idx}, this.value)" class="w-24 border border-purple-500 text-purple-300 px-2 py-0.5 rounded-lg text-xs font-black text-right focus:outline-none">
               </div>
             ` : ''}
 
@@ -961,7 +1088,7 @@
       const seller = document.getElementById('pos-seller-select').value || 'admin';
 
       let total = 0;
-      if (status === 'completed') {
+      if (status === 'completed' && window.db) {
         for (const item of appState.cart) {
           const prod = appState.products.find(p => p.id === item.productId);
           if (prod && prod.stock && prod.stock[whId]) {
@@ -996,7 +1123,12 @@
         items: JSON.parse(JSON.stringify(appState.cart)), totalAmount: total, store: Object.assign({}, appState.settings)
       };
 
-      await window.addDoc(window.collection(window.db, "sales"), sale);
+      if (window.db) {
+        await window.addDoc(window.collection(window.db, "sales"), sale);
+      } else {
+        sale.id = `sale_${Date.now()}`;
+        appState.salesHistory.push(sale);
+      }
       appState.lastCompletedSale = sale;
 
       if (status === 'completed') {
@@ -1008,14 +1140,31 @@
       appState.cart = []; renderPOSCart(); renderHeader();
     }
 
+    function filterSalesToday() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('sales-date-from').value = today;
+      document.getElementById('sales-date-to').value = today;
+      renderSalesHistory();
+    }
+
     function renderSalesHistory() {
       const container = document.getElementById('sales-list-container');
       if (!container) return;
       container.innerHTML = '';
-      if (!appState.salesHistory.length) { container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 bg-white dark:bg-darkcard rounded-2xl border custom-card">No hay ventas.</p>`; return; }
+
+      const fromVal = document.getElementById('sales-date-from')?.value;
+      const toVal = document.getElementById('sales-date-to')?.value;
+
+      const filtered = appState.salesHistory.filter(sale => {
+        if (fromVal && sale.dateISO < fromVal) return false;
+        if (toVal && sale.dateISO > toVal) return false;
+        return true;
+      });
+
+      if (!filtered.length) { container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 bg-white dark:bg-darkcard rounded-2xl border custom-card">No hay ventas registradas en este período.</p>`; document.getElementById('sales-sum-total').textContent = '$0.00'; return; }
 
       let sum = 0;
-      appState.salesHistory.forEach(sale => {
+      filtered.forEach(sale => {
         if (sale.status === 'completed') sum += (sale.totalAmount || 0);
         container.innerHTML += `
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-1 text-xs custom-card flex justify-between items-center">
@@ -1049,16 +1198,26 @@
       const id = document.getElementById('edit-sale-id').value;
       const name = document.getElementById('edit-sale-cust-name').value;
       const total = parseFloat(document.getElementById('edit-sale-total').value) || 0;
-      await window.updateDoc(window.doc(window.db, "sales", id), { "customer.name": name, totalAmount: total });
+      if (window.db) {
+        await window.updateDoc(window.doc(window.db, "sales", id), { "customer.name": name, totalAmount: total });
+      } else {
+        const item = appState.salesHistory.find(s => s.id === id);
+        if (item) { item.customer.name = name; item.totalAmount = total; }
+      }
       closeEditSaleModal();
       showToast("¡Comprobante modificado con éxito!", "success");
       renderSalesHistory();
     }
 
     async function deleteSale(id, saleNum) {
-      if (confirm(`⚠️ ¿Deseas eliminar el comprobante de compra ${saleNum}? Esta acción no se puede deshacer.`)) {
-        await window.deleteDoc(window.doc(window.db, "sales", id));
+      if (confirm(`⚠️ ¿Deseas eliminar el comprobante ${saleNum}? Esta acción no se puede deshacer.`)) {
+        if (window.db) {
+          await window.deleteDoc(window.doc(window.db, "sales", id));
+        } else {
+          appState.salesHistory = appState.salesHistory.filter(s => s.id !== id);
+        }
         showToast(`Comprobante ${saleNum} eliminado correctamente.`, "error");
+        renderSalesHistory();
       }
     }
 
@@ -1070,7 +1229,17 @@
     function showReceiptModal() {
       const sale = appState.lastCompletedSale;
       if (!sale) return;
-      document.getElementById('receipt-store-name').textContent = sale.store.storeName;
+      
+      const logoImg = document.getElementById('receipt-logo-img');
+      const logoContainer = document.getElementById('receipt-logo-container');
+      if (sale.store && sale.store.logoUrl) {
+        logoImg.src = sale.store.logoUrl;
+        logoContainer.classList.remove('hidden');
+      } else {
+        logoContainer.classList.add('hidden');
+      }
+
+      document.getElementById('receipt-store-name').textContent = sale.store?.storeName || appState.settings.storeName;
       document.getElementById('receipt-num').textContent = sale.saleNum;
       document.getElementById('receipt-date').textContent = sale.dateTimeStr;
       document.getElementById('receipt-payment-method').textContent = sale.paymentMethod;
@@ -1081,16 +1250,20 @@
       let total = 0;
       sale.items.forEach(item => {
         const prod = appState.products.find(p => p.id === item.productId);
-        if (!prod) return;
+        const name = prod ? prod.name : 'Producto';
         let uPrice = 0;
-        if (item.tariffType === 'detal') uPrice = parseFloat(prod.prices?.detal || 0);
-        else if (item.tariffType === 'mayor') uPrice = parseFloat(prod.prices?.mayor || prod.prices?.detal || 0);
-        else if (item.tariffType === 'caja') uPrice = parseFloat(prod.prices?.caja || prod.prices?.detal || 0);
-        else if (item.tariffType === 'vip') uPrice = parseFloat(item.customVipPrice || 0);
+        if (prod) {
+          if (item.tariffType === 'detal') uPrice = parseFloat(prod.prices?.detal || 0);
+          else if (item.tariffType === 'mayor') uPrice = parseFloat(prod.prices?.mayor || prod.prices?.detal || 0);
+          else if (item.tariffType === 'caja') uPrice = parseFloat(prod.prices?.caja || prod.prices?.detal || 0);
+          else if (item.tariffType === 'vip') uPrice = parseFloat(item.customVipPrice || 0);
+        } else {
+          uPrice = item.customVipPrice || 0;
+        }
         
         const sub = uPrice * item.qty;
         total += sub;
-        tbody.innerHTML += `<tr class="border-b"><td class="py-1 px-1 font-bold">${item.qty}</td><td class="py-1 px-1">${prod.name} (${item.tariffType.toUpperCase()})</td><td class="py-1 px-1 text-right">$${uPrice.toFixed(2)}</td><td class="py-1 px-1 text-right font-bold">$${sub.toFixed(2)}</td></tr>`;
+        tbody.innerHTML += `<tr class="border-b"><td class="py-1 px-1 font-bold">${item.qty}</td><td class="py-1 px-1">${name} (${item.tariffType.toUpperCase()})</td><td class="py-1 px-1 text-right">$${uPrice.toFixed(2)}</td><td class="py-1 px-1 text-right font-bold">$${sub.toFixed(2)}</td></tr>`;
       });
       document.getElementById('receipt-total-amount').textContent = `$${total.toFixed(2)}`;
       document.getElementById('receipt-modal').classList.remove('hidden');
@@ -1108,7 +1281,7 @@
       if (!sale) return;
       downloadReceiptPDF();
       const phone = sale.customer?.phone ? sale.customer.phone.replace(/[^0-9]/g, '') : '';
-      let msg = `*${sale.store.storeName}*\nHola *${sale.customer.name}*, tu comprobante ${sale.saleNum} por $${sale.totalAmount.toFixed(2)} ha sido generado en PDF. ¡Gracias por tu compra!`;
+      let msg = `*${sale.store?.storeName || 'Tienda'}*\nHola *${sale.customer.name}*, tu comprobante ${sale.saleNum} por $${sale.totalAmount.toFixed(2)} ha sido generado en PDF. ¡Gracias por tu compra!`;
       window.open(phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
@@ -1145,7 +1318,7 @@
       document.getElementById('product-form').reset();
       document.getElementById('prod-category').innerHTML = appState.categories.map(c => `<option value="${c}">${c}</option>`).join('');
       const whContainer = document.getElementById('prod-modal-warehouses-list');
-      whContainer.innerHTML = appState.warehouses.map(w => `<div class="bg-slate-50 dark:bg-darkbg p-2 rounded border"><span class="font-bold">${w.name}</span><div class="grid grid-cols-2 gap-2 mt-1"><div><label class="text-[9px]">Cajas</label><input type="number" id="st-box-${w.id}" value="0" class="w-full border p-1 rounded text-xs"></div><div><label class="text-[9px]">Sueltas</label><input type="number" id="st-loose-${w.id}" value="0" class="w-full border p-1 rounded text-xs"></div></div></div>`).join('');
+      whContainer.innerHTML = appState.warehouses.map(w => `<div class="p-2 rounded border custom-card"><span class="font-bold">${w.name}</span><div class="grid grid-cols-2 gap-2 mt-1"><div><label class="text-[9px]">Cajas</label><input type="number" id="st-box-${w.id}" value="0" class="w-full border p-1 rounded text-xs"></div><div><label class="text-[9px]">Sueltas</label><input type="number" id="st-loose-${w.id}" value="0" class="w-full border p-1 rounded text-xs"></div></div></div>`).join('');
       
       if (id) {
         const p = appState.products.find(x => x.id === id);
@@ -1196,19 +1369,34 @@
       };
       
       if (id) {
-        await window.updateDoc(window.doc(window.db, "products", id), prod);
+        if (window.db) {
+          await window.updateDoc(window.doc(window.db, "products", id), prod);
+        } else {
+          const idx = appState.products.findIndex(p => p.id === id);
+          if (idx !== -1) appState.products[idx] = { id, ...prod };
+        }
         showToast(`¡El artículo "${name}" fue modificado correctamente!`, "success");
       } else {
-        await window.addDoc(window.collection(window.db, "products"), prod);
+        if (window.db) {
+          await window.addDoc(window.collection(window.db, "products"), prod);
+        } else {
+          appState.products.push({ id: `prod_${Date.now()}`, ...prod });
+        }
         showToast(`¡El artículo "${name}" fue creado con éxito!`, "success");
       }
       closeProductModal();
+      renderAll();
     }
 
     async function deleteProduct(id, prodName) {
       if (confirm(`⚠️ ¿Deseas eliminar el artículo "${prodName}"? Esta acción no se puede deshacer.`)) {
-        await window.deleteDoc(window.doc(window.db, "products", id));
+        if (window.db) {
+          await window.deleteDoc(window.doc(window.db, "products", id));
+        } else {
+          appState.products = appState.products.filter(p => p.id !== id);
+        }
         showToast(`Artículo "${prodName}" eliminado correctamente.`, "error");
+        renderAll();
       }
     }
 
@@ -1219,6 +1407,8 @@
       document.getElementById('set-store-address').value = appState.settings.address;
       document.getElementById('set-theme-mode').value = appState.theme;
       document.getElementById('set-color-accent').value = appState.colors.accent;
+      document.getElementById('set-logo-url').value = appState.settings.logoUrl || '';
+      document.getElementById('set-login-bg-url').value = appState.settings.loginBgUrl || '';
       document.getElementById('menu-lbl-inventory').value = appState.menuLabels.inventory;
       document.getElementById('menu-lbl-pos').value = appState.menuLabels.pos;
       document.getElementById('menu-lbl-sales').value = appState.menuLabels.sales;
@@ -1239,6 +1429,7 @@
       if (!grid) return;
       grid.innerHTML = appState.warehouses.map(w => `<div class="bg-white dark:bg-darkcard border p-3 rounded-2xl flex justify-between items-center custom-card"><span class="font-bold text-xs">${w.name}</span></div>`).join('');
     }
+
     function openWarehouseModal() {
       const name = prompt("Nombre del nuevo almacén:");
       if (name) { 
@@ -1252,3 +1443,4 @@
   </script>
 </body>
 </html>
+```
