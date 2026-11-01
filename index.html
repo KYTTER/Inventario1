@@ -48,22 +48,18 @@
       appId: "1:851977920346:web:74d0bc894481e226661d63"
     };
 
-    let app, db;
-    try {
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      window.db = db;
-      window.collection = collection;
-      window.addDoc = addDoc;
-      window.getDocs = getDocs;
-      window.updateDoc = updateDoc;
-      window.deleteDoc = deleteDoc;
-      window.doc = doc;
-      window.onSnapshot = onSnapshot;
-      window.setDoc = setDoc;
-    } catch (e) {
-      console.warn("Modo local in-memory activado o inicialización de Firebase omitida:", e);
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.updateDoc = updateDoc;
+    window.deleteDoc = deleteDoc;
+    window.doc = doc;
+    window.onSnapshot = onSnapshot;
+    window.setDoc = setDoc;
 
     window.dispatchEvent(new Event('firebase-ready'));
   </script>
@@ -76,7 +72,7 @@
       --text-muted: #94a3b8;
       --accent-color: #eab308;
       --input-bg: #0f172a;
-      --input-text: #ffffff;
+      --input-text: #f8fafc;
       --input-border: #334155;
     }
 
@@ -96,7 +92,6 @@
     .custom-text-muted { color: var(--text-muted) !important; }
     .custom-bg-accent { background-color: var(--accent-color) !important; }
     
-    /* GARANTÍA DE VISIBILIDAD DE NUMEROS Y TEXTO EN TODOS LOS INPUTS */
     input, select, textarea {
       background-color: var(--input-bg) !important;
       color: var(--input-text) !important;
@@ -128,10 +123,10 @@
 </head>
 <body class="min-h-screen transition-colors duration-200 flex flex-col w-full relative">
 
-  <!-- NOTIFICACIONES FLOTANTES -->
+  <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
-  <!-- PANTALLA DE LOGIN CON FONDO CONFIGURABLE -->
+  <!-- PANTALLA DE LOGIN -->
   <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen">
     <div id="login-bg-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
     <div></div>
@@ -232,7 +227,7 @@
 
     <main class="w-full flex-1 p-2 sm:p-4 lg:p-6 box-border">
       
-      <!-- TAB INVENTARIO -->
+      <!-- INVENTARIO CON SELECTOR DE VISTA (LISTA O CUADRO) -->
       <section id="tab-inventory" class="tab-content space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
           <div class="relative">
@@ -254,7 +249,17 @@
             </select>
           </div>
 
-          <div class="flex justify-end pt-1">
+          <div class="flex items-center justify-between pt-1 border-t border-slate-700/40">
+            <!-- BOTONES PARA CAMBIAR ENTRE VISTA LISTA Y VISTA CUADRO -->
+            <div class="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-700/50">
+              <button onclick="setInventoryViewMode('list')" id="view-btn-list" class="p-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-brand-500 text-slate-950 custom-bg-accent shadow">
+                <i data-lucide="list" class="w-4 h-4"></i> <span class="hidden sm:inline">Lista</span>
+              </button>
+              <button onclick="setInventoryViewMode('grid')" id="view-btn-grid" class="p-1 rounded-lg text-xs font-bold flex items-center gap-1 text-slate-400">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i> <span class="hidden sm:inline">Cuadros</span>
+              </button>
+            </div>
+
             <button onclick="openProductModal()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow custom-bg-accent">
               <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Producto
             </button>
@@ -265,7 +270,7 @@
         <div id="inventory-pagination" class="bg-white dark:bg-darkcard border p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card w-full"></div>
       </section>
 
-      <!-- TAB PUNTO DE VENTA (POS) -->
+      <!-- PUNTO DE VENTA (POS) -->
       <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
         <div class="lg:col-span-7 space-y-3">
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
@@ -344,7 +349,7 @@
         </div>
       </section>
 
-      <!-- TAB VENTAS -->
+      <!-- VENTAS -->
       <section id="tab-sales" class="tab-content hidden space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-3 custom-card">
           <div class="flex flex-wrap items-center justify-between gap-2">
@@ -374,7 +379,7 @@
         <div id="sales-list-container" class="space-y-2 w-full"></div>
       </section>
 
-      <!-- TAB ALMACENES -->
+      <!-- ALMACENES -->
       <section id="tab-warehouses" class="tab-content hidden space-y-3 w-full">
         <div class="flex items-center justify-between">
           <h2 class="font-extrabold text-base">Almacenes y Depósitos</h2>
@@ -383,7 +388,7 @@
         <div id="warehouses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </section>
 
-      <!-- TAB CONFIGURACIÓN -->
+      <!-- CONFIGURACIÓN -->
       <section id="tab-settings" class="tab-content hidden space-y-3 w-full">
         <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border p-4 rounded-2xl shadow-sm space-y-4 custom-card">
           <h2 class="font-bold text-base border-b pb-2 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-brand-500"></i> Configuración General y Apariencia</h2>
@@ -392,7 +397,7 @@
           <div class="p-3 border rounded-xl space-y-3 custom-card">
             <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="image" class="w-4 h-4"></i> Logo de la Empresa</h3>
             <div>
-              <label class="block font-semibold text-[10px] mb-1">Subir Logo (Archivo Imagen)</label>
+              <label class="block font-semibold text-[10px] mb-1">Subir o Seleccionar Logo</label>
               <input type="file" id="set-logo-input" accept="image/*" onchange="handleLogoUpload(event)" class="w-full text-xs text-slate-400">
             </div>
             <div>
@@ -562,7 +567,7 @@
     let currentUser = null;
     let appState = {
       theme: 'dark',
-      viewMode: 'list',
+      inventoryViewMode: 'list', // 'list' o 'grid'
       currentPage: 1,
       itemsPerPage: 12,
       colors: { appBg: "#0f172a", cardBg: "#1e293b", textMain: "#f8fafc", textMuted: "#94a3b8", accent: "#eab308" },
@@ -574,14 +579,8 @@
         doc: "J-40982112-9", phone: "945473118", address: "Jr. Andahuaylas N 955 Int. 72 y 76 - Lima", currency: "$",
         logoUrl: "", loginBgUrl: ""
       },
-      users: [
-        { id: "u_1", username: "admin", password: "leon", role: "admin" },
-        { id: "u_2", username: "vendedora", password: "123", role: "seller" }
-      ],
-      warehouses: [
-        { id: "wh_1", name: "Almacén Principal" },
-        { id: "wh_2", name: "Depósito Secundario" }
-      ],
+      users: [{ id: "u_1", username: "admin", password: "leon", role: "admin" }, { id: "u_2", username: "vendedora", password: "123", role: "seller" }],
+      warehouses: [{ id: "wh_1", name: "Almacén Principal" }, { id: "wh_2", name: "Depósito Secundario" }],
       products: [], salesHistory: [], cart: [], lastCompletedSale: null
     };
 
@@ -607,11 +606,6 @@
     window.addEventListener('DOMContentLoaded', () => { applyCustomColors(); lucide.createIcons(); });
 
     window.addEventListener('firebase-ready', () => {
-      if (!window.db) {
-        renderAll();
-        return;
-      }
-
       window.onSnapshot(window.doc(window.db, "app_data", "main_state"), (docSnap) => {
         if (docSnap.exists()) {
           const remoteData = docSnap.data();
@@ -622,6 +616,7 @@
           if (remoteData.categories) appState.categories = remoteData.categories;
           if (remoteData.menuLabels) appState.menuLabels = remoteData.menuLabels;
           if (remoteData.theme) appState.theme = remoteData.theme;
+          if (remoteData.inventoryViewMode) appState.inventoryViewMode = remoteData.inventoryViewMode;
           applyCustomColors();
         } else {
           window.setDoc(window.doc(window.db, "app_data", "main_state"), appState);
@@ -662,12 +657,11 @@
     function handleLogout() { location.reload(); }
 
     function saveStateRemote() {
-      if (window.db) {
-        window.setDoc(window.doc(window.db, "app_data", "main_state"), {
-          settings: appState.settings, warehouses: appState.warehouses, colors: appState.colors,
-          users: appState.users, categories: appState.categories, menuLabels: appState.menuLabels, theme: appState.theme
-        }).catch(err => console.error(err));
-      }
+      window.setDoc(window.doc(window.db, "app_data", "main_state"), {
+        settings: appState.settings, warehouses: appState.warehouses, colors: appState.colors,
+        users: appState.users, categories: appState.categories, menuLabels: appState.menuLabels,
+        theme: appState.theme, inventoryViewMode: appState.inventoryViewMode
+      }).catch(err => console.error(err));
     }
 
     function applyCustomColors() {
@@ -675,7 +669,7 @@
       const isLight = appState.theme === 'light';
 
       const inputBg = isLight ? "#ffffff" : "#0f172a";
-      const inputText = isLight ? "#0f172a" : "#ffffff";
+      const inputText = isLight ? "#0f172a" : "#f8fafc";
       const inputBorder = isLight ? "#cbd5e1" : "#334155";
 
       const styleTag = document.getElementById('custom-theme-styles');
@@ -790,6 +784,25 @@
       showToast("Fondo de pantalla de Login guardado", "success");
     }
 
+    // CAMBIAR MODO DE VISTA EN INVENTARIO (LISTA / CUADRO)
+    function setInventoryViewMode(mode) {
+      appState.inventoryViewMode = mode;
+      
+      const btnList = document.getElementById('view-btn-list');
+      const btnGrid = document.getElementById('view-btn-grid');
+
+      if (mode === 'list') {
+        btnList.className = "p-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-brand-500 text-slate-950 custom-bg-accent shadow";
+        btnGrid.className = "p-1 rounded-lg text-xs font-bold flex items-center gap-1 text-slate-400 hover:text-white";
+      } else {
+        btnGrid.className = "p-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-brand-500 text-slate-950 custom-bg-accent shadow";
+        btnList.className = "p-1 rounded-lg text-xs font-bold flex items-center gap-1 text-slate-400 hover:text-white";
+      }
+
+      saveStateRemote();
+      renderInventory();
+    }
+
     function switchTab(tabId) {
       if (currentUser && currentUser.role === 'seller' && tabId === 'settings') { showToast("Acceso restringido", "error"); return; }
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -893,30 +906,57 @@
         return;
       }
 
-      let html = `<div class="space-y-2 w-full">`;
+      const isGrid = appState.inventoryViewMode === 'grid';
+      let html = `<div class="${isGrid ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5' : 'space-y-2'} w-full">`;
+
       paginated.forEach(prod => {
         let whRows = '';
         appState.warehouses.forEach(wh => {
           if (whFilter === 'all' || whFilter === wh.id) {
             const st = prod.stock && prod.stock[wh.id] ? prod.stock[wh.id] : { boxes: 0, loose: 0 };
-            whRows += `<div class="flex justify-between text-[11px] py-0.5 border-t border-slate-100 dark:border-darkborder/40"><span class="font-bold">${wh.name}:</span><span class="font-mono">${st.boxes} caj + ${st.loose} un.</span></div>`;
+            whRows += `<div class="flex justify-between text-[10px] py-0.5 border-t border-slate-100 dark:border-darkborder/40"><span class="font-bold truncate">${wh.name}:</span><span class="font-mono shrink-0">${st.boxes}caj + ${st.loose}un</span></div>`;
           }
         });
 
-        html += `
-          <div class="bg-white dark:bg-darkcard border rounded-2xl p-3 shadow-sm space-y-1.5 custom-card">
-            <div class="flex justify-between items-start">
+        if (isGrid) {
+          // TARJETA TIPO CUADRO (GRID)
+          html += `
+            <div class="bg-white dark:bg-darkcard border rounded-2xl p-2.5 shadow-sm flex flex-col justify-between space-y-2 custom-card">
               <div>
-                <h3 class="font-extrabold text-xs custom-text-main">${prod.name}</h3>
-                <span class="text-[9px] bg-brand-500/20 text-brand-400 font-bold px-1.5 py-0.2 rounded">${prod.category || 'General'}</span>
+                <div class="flex justify-between items-start gap-1">
+                  <h3 class="font-extrabold text-xs custom-text-main line-clamp-2 leading-tight">${prod.name}</h3>
+                  <div class="flex gap-0.5 shrink-0">
+                    <button onclick="openProductModal('${prod.id}')" class="text-slate-400 hover:text-brand-500 p-0.5"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                    ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteProduct('${prod.id}', '${prod.name}')" class="text-slate-400 hover:text-red-500 p-0.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                  </div>
+                </div>
+                <div class="mt-1 flex items-center gap-1">
+                  <span class="text-[9px] bg-brand-500/20 text-brand-400 font-bold px-1.5 py-0.2 rounded truncate">${prod.category || 'General'}</span>
+                  <span class="text-[9px] font-bold text-slate-400">$${parseFloat(prod.prices?.detal || 0).toFixed(2)}</span>
+                </div>
               </div>
-              <div class="flex gap-1">
-                <button onclick="openProductModal('${prod.id}')" class="text-slate-400 hover:text-brand-500 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
-                ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteProduct('${prod.id}', '${prod.name}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+              <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl w-full">${whRows}</div>
+            </div>`;
+        } else {
+          // FILA TIPO LISTA
+          html += `
+            <div class="bg-white dark:bg-darkcard border rounded-2xl p-3 shadow-sm space-y-1.5 custom-card">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-extrabold text-xs custom-text-main">${prod.name}</h3>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[9px] bg-brand-500/20 text-brand-400 font-bold px-1.5 py-0.2 rounded">${prod.category || 'General'}</span>
+                    <span class="text-[10px] font-extrabold text-brand-500">Detal: $${parseFloat(prod.prices?.detal || 0).toFixed(2)} | Mayor: $${parseFloat(prod.prices?.mayor || 0).toFixed(2)} | Caja: $${parseFloat(prod.prices?.caja || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="openProductModal('${prod.id}')" class="text-slate-400 hover:text-brand-500 p-1"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                  ${currentUser && currentUser.role === 'admin' ? `<button onclick="deleteProduct('${prod.id}', '${prod.name}')" class="text-slate-400 hover:text-red-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                </div>
               </div>
-            </div>
-            <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl">${whRows}</div>
-          </div>`;
+              <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl">${whRows}</div>
+            </div>`;
+        }
       });
       html += `</div>`;
       container.innerHTML = html;
@@ -1087,7 +1127,7 @@
       const seller = document.getElementById('pos-seller-select').value || 'admin';
 
       let total = 0;
-      if (status === 'completed' && window.db) {
+      if (status === 'completed') {
         for (const item of appState.cart) {
           const prod = appState.products.find(p => p.id === item.productId);
           if (prod && prod.stock && prod.stock[whId]) {
@@ -1122,12 +1162,7 @@
         items: JSON.parse(JSON.stringify(appState.cart)), totalAmount: total, store: Object.assign({}, appState.settings)
       };
 
-      if (window.db) {
-        await window.addDoc(window.collection(window.db, "sales"), sale);
-      } else {
-        sale.id = `sale_${Date.now()}`;
-        appState.salesHistory.push(sale);
-      }
+      await window.addDoc(window.collection(window.db, "sales"), sale);
       appState.lastCompletedSale = sale;
 
       if (status === 'completed') {
@@ -1139,31 +1174,14 @@
       appState.cart = []; renderPOSCart(); renderHeader();
     }
 
-    function filterSalesToday() {
-      const today = new Date().toISOString().slice(0, 10);
-      document.getElementById('sales-date-from').value = today;
-      document.getElementById('sales-date-to').value = today;
-      renderSalesHistory();
-    }
-
     function renderSalesHistory() {
       const container = document.getElementById('sales-list-container');
       if (!container) return;
       container.innerHTML = '';
-
-      const fromVal = document.getElementById('sales-date-from')?.value;
-      const toVal = document.getElementById('sales-date-to')?.value;
-
-      const filtered = appState.salesHistory.filter(sale => {
-        if (fromVal && sale.dateISO < fromVal) return false;
-        if (toVal && sale.dateISO > toVal) return false;
-        return true;
-      });
-
-      if (!filtered.length) { container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 bg-white dark:bg-darkcard rounded-2xl border custom-card">No hay ventas registradas en este período.</p>`; document.getElementById('sales-sum-total').textContent = '$0.00'; return; }
+      if (!appState.salesHistory.length) { container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 bg-white dark:bg-darkcard rounded-2xl border custom-card">No hay ventas.</p>`; return; }
 
       let sum = 0;
-      filtered.forEach(sale => {
+      appState.salesHistory.forEach(sale => {
         if (sale.status === 'completed') sum += (sale.totalAmount || 0);
         container.innerHTML += `
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-1 text-xs custom-card flex justify-between items-center">
@@ -1197,26 +1215,16 @@
       const id = document.getElementById('edit-sale-id').value;
       const name = document.getElementById('edit-sale-cust-name').value;
       const total = parseFloat(document.getElementById('edit-sale-total').value) || 0;
-      if (window.db) {
-        await window.updateDoc(window.doc(window.db, "sales", id), { "customer.name": name, totalAmount: total });
-      } else {
-        const item = appState.salesHistory.find(s => s.id === id);
-        if (item) { item.customer.name = name; item.totalAmount = total; }
-      }
+      await window.updateDoc(window.doc(window.db, "sales", id), { "customer.name": name, totalAmount: total });
       closeEditSaleModal();
       showToast("¡Comprobante modificado con éxito!", "success");
       renderSalesHistory();
     }
 
     async function deleteSale(id, saleNum) {
-      if (confirm(`⚠️ ¿Deseas eliminar el comprobante ${saleNum}? Esta acción no se puede deshacer.`)) {
-        if (window.db) {
-          await window.deleteDoc(window.doc(window.db, "sales", id));
-        } else {
-          appState.salesHistory = appState.salesHistory.filter(s => s.id !== id);
-        }
+      if (confirm(`⚠️ ¿Deseas eliminar el comprobante de compra ${saleNum}? Esta acción no se puede deshacer.`)) {
+        await window.deleteDoc(window.doc(window.db, "sales", id));
         showToast(`Comprobante ${saleNum} eliminado correctamente.`, "error");
-        renderSalesHistory();
       }
     }
 
@@ -1231,14 +1239,14 @@
       
       const logoImg = document.getElementById('receipt-logo-img');
       const logoContainer = document.getElementById('receipt-logo-container');
-      if (sale.store && sale.store.logoUrl) {
+      if (sale.store.logoUrl) {
         logoImg.src = sale.store.logoUrl;
         logoContainer.classList.remove('hidden');
       } else {
         logoContainer.classList.add('hidden');
       }
 
-      document.getElementById('receipt-store-name').textContent = sale.store?.storeName || appState.settings.storeName;
+      document.getElementById('receipt-store-name').textContent = sale.store.storeName;
       document.getElementById('receipt-num').textContent = sale.saleNum;
       document.getElementById('receipt-date').textContent = sale.dateTimeStr;
       document.getElementById('receipt-payment-method').textContent = sale.paymentMethod;
@@ -1249,20 +1257,16 @@
       let total = 0;
       sale.items.forEach(item => {
         const prod = appState.products.find(p => p.id === item.productId);
-        const name = prod ? prod.name : 'Producto';
+        if (!prod) return;
         let uPrice = 0;
-        if (prod) {
-          if (item.tariffType === 'detal') uPrice = parseFloat(prod.prices?.detal || 0);
-          else if (item.tariffType === 'mayor') uPrice = parseFloat(prod.prices?.mayor || prod.prices?.detal || 0);
-          else if (item.tariffType === 'caja') uPrice = parseFloat(prod.prices?.caja || prod.prices?.detal || 0);
-          else if (item.tariffType === 'vip') uPrice = parseFloat(item.customVipPrice || 0);
-        } else {
-          uPrice = item.customVipPrice || 0;
-        }
+        if (item.tariffType === 'detal') uPrice = parseFloat(prod.prices?.detal || 0);
+        else if (item.tariffType === 'mayor') uPrice = parseFloat(prod.prices?.mayor || prod.prices?.detal || 0);
+        else if (item.tariffType === 'caja') uPrice = parseFloat(prod.prices?.caja || prod.prices?.detal || 0);
+        else if (item.tariffType === 'vip') uPrice = parseFloat(item.customVipPrice || 0);
         
         const sub = uPrice * item.qty;
         total += sub;
-        tbody.innerHTML += `<tr class="border-b"><td class="py-1 px-1 font-bold">${item.qty}</td><td class="py-1 px-1">${name} (${item.tariffType.toUpperCase()})</td><td class="py-1 px-1 text-right">$${uPrice.toFixed(2)}</td><td class="py-1 px-1 text-right font-bold">$${sub.toFixed(2)}</td></tr>`;
+        tbody.innerHTML += `<tr class="border-b"><td class="py-1 px-1 font-bold">${item.qty}</td><td class="py-1 px-1">${prod.name} (${item.tariffType.toUpperCase()})</td><td class="py-1 px-1 text-right">$${uPrice.toFixed(2)}</td><td class="py-1 px-1 text-right font-bold">$${sub.toFixed(2)}</td></tr>`;
       });
       document.getElementById('receipt-total-amount').textContent = `$${total.toFixed(2)}`;
       document.getElementById('receipt-modal').classList.remove('hidden');
@@ -1280,7 +1284,7 @@
       if (!sale) return;
       downloadReceiptPDF();
       const phone = sale.customer?.phone ? sale.customer.phone.replace(/[^0-9]/g, '') : '';
-      let msg = `*${sale.store?.storeName || 'Tienda'}*\nHola *${sale.customer.name}*, tu comprobante ${sale.saleNum} por $${sale.totalAmount.toFixed(2)} ha sido generado en PDF. ¡Gracias por tu compra!`;
+      let msg = `*${sale.store.storeName}*\nHola *${sale.customer.name}*, tu comprobante ${sale.saleNum} por $${sale.totalAmount.toFixed(2)} ha sido generado en PDF. ¡Gracias por tu compra!`;
       window.open(phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
@@ -1368,34 +1372,19 @@
       };
       
       if (id) {
-        if (window.db) {
-          await window.updateDoc(window.doc(window.db, "products", id), prod);
-        } else {
-          const idx = appState.products.findIndex(p => p.id === id);
-          if (idx !== -1) appState.products[idx] = { id, ...prod };
-        }
+        await window.updateDoc(window.doc(window.db, "products", id), prod);
         showToast(`¡El artículo "${name}" fue modificado correctamente!`, "success");
       } else {
-        if (window.db) {
-          await window.addDoc(window.collection(window.db, "products"), prod);
-        } else {
-          appState.products.push({ id: `prod_${Date.now()}`, ...prod });
-        }
+        await window.addDoc(window.collection(window.db, "products"), prod);
         showToast(`¡El artículo "${name}" fue creado con éxito!`, "success");
       }
       closeProductModal();
-      renderAll();
     }
 
     async function deleteProduct(id, prodName) {
       if (confirm(`⚠️ ¿Deseas eliminar el artículo "${prodName}"? Esta acción no se puede deshacer.`)) {
-        if (window.db) {
-          await window.deleteDoc(window.doc(window.db, "products", id));
-        } else {
-          appState.products = appState.products.filter(p => p.id !== id);
-        }
+        await window.deleteDoc(window.doc(window.db, "products", id));
         showToast(`Artículo "${prodName}" eliminado correctamente.`, "error");
-        renderAll();
       }
     }
 
@@ -1428,7 +1417,6 @@
       if (!grid) return;
       grid.innerHTML = appState.warehouses.map(w => `<div class="bg-white dark:bg-darkcard border p-3 rounded-2xl flex justify-between items-center custom-card"><span class="font-bold text-xs">${w.name}</span></div>`).join('');
     }
-
     function openWarehouseModal() {
       const name = prompt("Nombre del nuevo almacén:");
       if (name) { 
@@ -1442,4 +1430,3 @@
   </script>
 </body>
 </html>
-```
