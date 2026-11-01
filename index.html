@@ -136,17 +136,22 @@
   </div>
 
   <!-- LOGIN -->
-  <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen animate-fade">
+  <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen animate-fade overflow-hidden">
+    <!-- CONTENEDOR DE VIDEO ANIMADO EN VIVO (OPCIONAL) -->
+    <div id="login-video-bg-container" class="absolute inset-0 hidden overflow-hidden pointer-events-none">
+      <video id="login-video-element" class="w-full h-full object-cover" autoplay loop muted playsinline></video>
+    </div>
+    
     <div id="login-bg-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
     <div></div>
-    <div class="relative w-full max-w-sm sm:max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100 mx-auto">
+    <div class="relative z-10 w-full max-w-sm sm:max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100 mx-auto">
       <div class="text-center space-y-2">
         <div id="login-logo-container" class="mx-auto w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden">
           <img id="login-logo-img" src="" alt="Logo" class="w-full h-full object-cover hidden">
           <i id="login-brand-icon" data-lucide="store" class="w-10 h-10 text-slate-900"></i>
         </div>
         <h2 id="login-title" class="text-xl font-extrabold tracking-tight truncate">IMPORT EXPORT JOTAM Y SHADDAI</h2>
-        <p class="text-xs text-slate-400">Ingresa tus credenciales para acceder (admin / leon)</p>
+        <p class="text-xs text-slate-400">Ingresa tus credenciales para acceder</p>
       </div>
 
       <form onsubmit="handleLogin(event)" class="space-y-4">
@@ -154,14 +159,14 @@
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Usuario</label>
           <div class="relative">
             <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="login-username" required placeholder="admin" value="admin" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="text" id="login-username" required placeholder="Ingresa tu usuario" value="" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
         <div>
           <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Contraseña</label>
           <div class="relative">
             <i data-lucide="lock" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="password" id="login-password" required placeholder="••••" value="leon" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <input type="password" id="login-password" required placeholder="••••••••" value="" class="w-full pl-9 pr-3 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
         </div>
         <div id="login-error" class="hidden p-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-xl font-bold text-center">
@@ -376,10 +381,11 @@
           </div>
 
           <div class="p-3 border rounded-xl space-y-3 custom-card">
-            <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="monitor" class="w-4 h-4"></i> Fondo de la Pantalla de Login</h3>
+            <h3 class="font-extrabold text-xs text-brand-500 flex items-center gap-1.5"><i data-lucide="video" class="w-4 h-4"></i> Fondo de Pantalla de Login (Imagen, GIF o Video)</h3>
             <div>
-              <label class="block font-semibold text-[10px] mb-1">URL de la Imagen de Fondo</label>
-              <input type="text" id="set-login-bg-url" placeholder="https://..." onchange="handleLoginBgUrlChange(this.value)" class="w-full border p-2 rounded-xl text-xs font-medium custom-card">
+              <label class="block font-semibold text-[10px] mb-1">URL del Fondo (Imagen JPG/PNG, GIF Animado o Video MP4/WebM)</label>
+              <input type="text" id="set-login-bg-url" placeholder="Ej: https://.../fondo.gif o https://.../video.mp4" onchange="handleLoginBgUrlChange(this.value)" class="w-full border p-2 rounded-xl text-xs font-medium custom-card">
+              <p class="text-[9px] text-slate-400 mt-1">Soporta enlaces directos a GIFs animados o videos MP4/WebM con movimiento fluido.</p>
             </div>
           </div>
 
@@ -608,7 +614,6 @@
           if (remoteData.settings) appState.settings = remoteData.settings;
           if (remoteData.warehouses) appState.warehouses = remoteData.warehouses;
           if (remoteData.colors) appState.colors = remoteData.colors;
-          // Garantizar que siempre existan usuarios válidos para el login
           if (remoteData.users && remoteData.users.length > 0) {
             appState.users = remoteData.users;
           }
@@ -703,10 +708,24 @@
       else document.documentElement.classList.add('dark');
 
       const loginScreen = document.getElementById('login-screen');
-      if (loginScreen) {
-        if (appState.settings.loginBgUrl) {
-          loginScreen.style.backgroundImage = `url('${appState.settings.loginBgUrl}')`;
+      const videoContainer = document.getElementById('login-video-bg-container');
+      const videoElement = document.getElementById('login-video-element');
+
+      if (loginScreen && videoContainer && videoElement) {
+        const bgUrl = appState.settings.loginBgUrl ? appState.settings.loginBgUrl.trim() : '';
+        const isVideo = bgUrl.match(/\.(mp4|webm|ogg)($|\?)/i);
+
+        if (isVideo) {
+          videoElement.src = bgUrl;
+          videoContainer.classList.remove('hidden');
+          loginScreen.style.backgroundImage = '';
+        } else if (bgUrl) {
+          videoContainer.classList.add('hidden');
+          videoElement.src = '';
+          loginScreen.style.backgroundImage = `url('${bgUrl}')`;
         } else {
+          videoContainer.classList.add('hidden');
+          videoElement.src = '';
           loginScreen.style.backgroundImage = '';
         }
       }
@@ -784,7 +803,7 @@
       appState.settings.loginBgUrl = url.trim();
       applyCustomColors();
       saveStateRemote();
-      showToast("Fondo de pantalla de Login guardado", "success");
+      showToast("Fondo de pantalla de Login guardado (Soporta Imagen, GIF o Video)", "success");
     }
 
     async function confirmFactoryReset() {
