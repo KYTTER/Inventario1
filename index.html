@@ -89,6 +89,16 @@
     .custom-text-muted { color: var(--text-muted) !important; }
     .custom-bg-accent { background-color: var(--accent-color) !important; }
     
+    /* CORRECCIÓN: Inputs visibles con fondo claro/oscuro adecuado y texto nítido */
+    input, select, textarea {
+      background-color: #0b1120 !important;
+      color: #ffffff !important;
+      border-color: #334155 !important;
+    }
+    input::placeholder, textarea::placeholder {
+      color: #94a3b8 !important;
+    }
+
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
     ::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 4px; }
@@ -623,6 +633,8 @@
           .custom-text-main { color: var(--text-main) !important; }
           .custom-text-muted { color: var(--text-muted) !important; }
           .custom-bg-accent { background-color: var(--accent-color) !important; }
+          input, select, textarea { background-color: #0b1120 !important; color: #ffffff !important; border-color: #334155 !important; }
+          input::placeholder, textarea::placeholder { color: #94a3b8 !important; }
         `;
       }
       if (appState.theme === 'light') document.documentElement.classList.remove('dark');
@@ -843,7 +855,6 @@
       renderPOSCart(); renderHeader();
     }
 
-    // CARRITO CON BOTONES PASTILLA [Detal] [Mayor] [Caja] [VIP] Y CAMPO LIBRE VIP DE LA JEFA
     function renderPOSCart() {
       const container = document.getElementById('cart-items-list');
       container.innerHTML = '';
@@ -882,10 +893,7 @@
               <button onclick="removeFromCart(${idx})" class="text-red-400 hover:text-red-600 p-0.5"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
-            <!-- CONTROLES PASTILLA Y CANTIDAD EN MÓVIL Y DEKSTOP -->
             <div class="flex flex-wrap items-center justify-between gap-1.5">
-              
-              <!-- PASTILLAS DE TARIFAS -->
               <div class="flex items-center gap-0.5 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-700/40">
                 <button onclick="setTariffType(${idx}, 'detal')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'detal' ? 'bg-brand-500 text-slate-950 custom-bg-accent shadow' : 'text-slate-400'}">Detal</button>
                 <button onclick="setTariffType(${idx}, 'mayor')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'mayor' ? 'bg-brand-500 text-slate-950 custom-bg-accent shadow' : 'text-slate-400'}">Mayor</button>
@@ -893,7 +901,6 @@
                 <button onclick="setTariffType(${idx}, 'vip')" class="px-2 py-0.5 text-[10px] font-bold rounded-lg ${item.tariffType === 'vip' ? 'bg-purple-600 text-white shadow' : 'text-slate-400'}">VIP</button>
               </div>
 
-              <!-- CANTIDAD [-] 1 [+] -->
               <div class="flex items-center gap-1 font-bold bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded-xl border border-slate-700/40">
                 <button onclick="updateCartQty(${idx}, -1)" class="w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white">-</button>
                 <span class="w-6 text-center text-xs custom-text-main">${item.qty}</span>
@@ -901,7 +908,6 @@
               </div>
             </div>
 
-            <!-- SI ES VIP SE HABILITA CAMPO DE PRECIO INDICADO POR LA JEFA -->
             ${item.tariffType === 'vip' ? `
               <div class="flex items-center justify-between gap-2 pt-1 border-t border-purple-500/30">
                 <label class="text-[10px] font-bold text-purple-400 uppercase">Precio VIP ($ / un):</label>
@@ -1190,7 +1196,7 @@
       };
       
       if (id) {
-        await window.updateDoc(window.doc(window.doc(window.db, "products", id)), prod);
+        await window.updateDoc(window.doc(window.db, "products", id), prod);
         showToast(`¡El artículo "${name}" fue modificado correctamente!`, "success");
       } else {
         await window.addDoc(window.collection(window.db, "products"), prod);
