@@ -37,7 +37,7 @@
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCT0ZQcHbNzSU2_q-vk5QA2j4xSx-aX10c",
@@ -60,6 +60,7 @@
     window.doc = doc;
     window.onSnapshot = onSnapshot;
     window.setDoc = setDoc;
+    window.writeBatch = writeBatch;
 
     window.dispatchEvent(new Event('firebase-ready'));
   </script>
@@ -101,17 +102,24 @@
       color: var(--text-muted) !important;
     }
 
+    /* ANIMACIONES MODERNAS */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+    @keyframes pulseLoader {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .animate-pulse-loader { animation: pulseLoader 1.2s infinite ease-in-out; }
+
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
     ::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 4px; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .toast-anim { animation: fadeIn 0.3s ease-out forwards; }
 
     @media print {
       body * { visibility: hidden; }
@@ -126,8 +134,16 @@
   <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
+  <!-- PANTALLA DE CARGA / MODULO FLOTANTE -->
+  <div id="global-loader" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden animate-fade">
+    <div class="bg-slate-900 border border-slate-700 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
+      <div class="w-6 h-6 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+      <span id="loader-text" class="text-xs font-bold text-slate-200 tracking-wide">Espere un momento, está cargando datos...</span>
+    </div>
+  </div>
+
   <!-- PANTALLA DE LOGIN -->
-  <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen">
+  <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-4 bg-slate-900 bg-cover bg-center w-full min-h-screen animate-fade">
     <div id="login-bg-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md"></div>
     <div></div>
     <div class="relative w-full max-w-sm sm:max-w-md bg-slate-900/90 border border-slate-700/60 p-6 rounded-3xl shadow-2xl space-y-5 text-slate-100 mx-auto">
@@ -225,53 +241,61 @@
       </div>
     </header>
 
-    <main class="w-full flex-1 p-2 sm:p-4 lg:p-6 box-border">
+    <main class="w-full flex-1 p-2 sm:p-4 lg:p-6 box-border animate-fade">
       
-      <!-- INVENTARIO CON SELECTOR DE VISTA (LISTA O CUADRO) -->
+      <!-- INVENTARIO CON BÚSQUEDA COLAPSABLE Y VISTA LISTA/CUADRO -->
       <section id="tab-inventory" class="tab-content space-y-3 w-full">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
-          <div class="relative">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
-            <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Nombre, Código o Modelo..." class="w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium custom-card">
-            <button onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-xs">
-            <select id="inventory-cat-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
-              <option value="all">Categoría: Todas</option>
-            </select>
-            <select id="inventory-wh-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card"></select>
-            <select id="inventory-status-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
-              <option value="all">Stock: Todos los estados</option>
-              <option value="complete">📦 Completo (Solo Cajas llenas)</option>
-              <option value="loose">🧩 Con Unidades Sueltas</option>
-              <option value="empty">⚠️ Vacío o Crítico (0 unidades)</option>
-            </select>
-          </div>
-
-          <div class="flex items-center justify-between pt-1 border-t border-slate-700/40">
-            <!-- BOTONES PARA CAMBIAR ENTRE VISTA LISTA Y VISTA CUADRO -->
-            <div class="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-700/50">
-              <button onclick="setInventoryViewMode('list')" id="view-btn-list" class="p-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-brand-500 text-slate-950 custom-bg-accent shadow">
-                <i data-lucide="list" class="w-4 h-4"></i> <span class="hidden sm:inline">Lista</span>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <!-- BOTÓN PARA COLAPSAR/EXPANDIR BÚSQUEDA Y FILTROS -->
+              <button onclick="toggleSearchCollapse()" class="bg-slate-200 dark:bg-darkbg text-slate-700 dark:text-slate-200 px-2 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 border">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-brand-500"></i> <span id="collapse-lbl">Ocultar Filtros</span>
               </button>
-              <button onclick="setInventoryViewMode('grid')" id="view-btn-grid" class="p-1 rounded-lg text-xs font-bold flex items-center gap-1 text-slate-400">
-                <i data-lucide="layout-grid" class="w-4 h-4"></i> <span class="hidden sm:inline">Cuadros</span>
-              </button>
+              <div class="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-700/50">
+                <button onclick="setInventoryViewMode('list')" id="view-btn-list" class="p-1 rounded-lg text-xs font-bold flex items-center gap-1 bg-brand-500 text-slate-950 custom-bg-accent shadow">
+                  <i data-lucide="list" class="w-4 h-4"></i>
+                </button>
+                <button onclick="setInventoryViewMode('grid')" id="view-btn-grid" class="p-1 rounded-lg text-xs font-bold flex items-center gap-1 text-slate-400">
+                  <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
 
             <button onclick="openProductModal()" class="bg-brand-500 hover:bg-brand-600 text-darkbg font-extrabold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 shadow custom-bg-accent">
               <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Producto
             </button>
           </div>
+
+          <!-- CONTENEDOR COLAPSABLE DE BÚSQUEDA Y FILTROS -->
+          <div id="search-collapse-box" class="space-y-2 pt-1">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-500"></i>
+              <input type="text" id="inventory-search" oninput="onSearchInput()" placeholder="Buscar por Nombre, Código o Modelo..." class="w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium custom-card">
+              <button onclick="clearSearch()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-xs">
+              <select id="inventory-cat-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
+                <option value="all">Categoría: Todas</option>
+              </select>
+              <select id="inventory-wh-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card"></select>
+              <select id="inventory-status-filter" onchange="renderInventory()" class="border font-bold rounded-xl px-2 py-1.5 text-[11px] custom-card">
+                <option value="all">Stock: Todos los estados</option>
+                <option value="complete">📦 Completo (Solo Cajas llenas)</option>
+                <option value="loose">🧩 Con Unidades Sueltas</option>
+                <option value="empty">⚠️ Vacío o Crítico (0 unidades)</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div id="inventory-render-container" class="w-full"></div>
+        <div id="inventory-render-container" class="w-full animate-fade"></div>
         <div id="inventory-pagination" class="bg-white dark:bg-darkcard border p-2.5 rounded-2xl shadow-sm flex items-center justify-between text-xs font-semibold custom-card w-full"></div>
       </section>
 
       <!-- PUNTO DE VENTA (POS) -->
-      <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
+      <section id="tab-pos" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-4 w-full animate-fade">
         <div class="lg:col-span-7 space-y-3">
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-2 custom-card">
             <div class="flex flex-wrap items-center justify-between gap-2">
@@ -302,7 +326,7 @@
               <div class="mb-3 p-2.5 rounded-xl border text-xs space-y-2 custom-card">
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="block font-bold text-[10px] text-slate-400 uppercase mb-1">Vendedora</label>
+                    <label class="block font-bold text-[10px] text-slate-400 uppercase mb-1">Vendedora / Vendedor</label>
                     <select id="pos-seller-select" class="w-full border px-2 py-1.5 rounded-xl text-xs font-semibold custom-card"></select>
                   </div>
                   <div>
@@ -349,13 +373,13 @@
         </div>
       </section>
 
-      <!-- VENTAS -->
-      <section id="tab-sales" class="tab-content hidden space-y-3 w-full">
+      <!-- VENTAS Y ARQUEO DIARIO -->
+      <section id="tab-sales" class="tab-content hidden space-y-3 w-full animate-fade">
         <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-3 custom-card">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="font-extrabold text-sm flex items-center gap-2"><i data-lucide="receipt" class="w-4 h-4 text-brand-500"></i> Historial de Ventas y Comprobantes</h2>
+            <h2 class="font-extrabold text-sm flex items-center gap-2"><i data-lucide="receipt" class="w-4 h-4 text-brand-500"></i> Historial de Ventas y Cierre Diario de Caja</h2>
             <div class="flex items-center gap-1.5">
-              <button onclick="filterSalesToday()" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold px-2.5 py-1 rounded-xl text-xs border">Hoy</button>
+              <button onclick="filterSalesToday()" class="bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold px-2.5 py-1 rounded-xl text-xs border">Hoy (Cierre)</button>
               <button onclick="renderSalesHistory()" class="bg-slate-100 dark:bg-darkbg text-slate-600 dark:text-slate-300 font-bold px-2.5 py-1 rounded-xl text-xs border">Ver Todas</button>
             </div>
           </div>
@@ -370,7 +394,7 @@
             </div>
             <div class="col-span-2 flex items-end">
               <div class="w-full border px-3 py-1.5 rounded-xl flex items-center justify-between font-extrabold text-xs custom-card">
-                <span class="text-slate-400">Total Recaudado:</span>
+                <span class="text-slate-400">Total Recaudado (Caja):</span>
                 <span id="sales-sum-total" class="text-brand-500">$0.00</span>
               </div>
             </div>
@@ -380,18 +404,27 @@
       </section>
 
       <!-- ALMACENES -->
-      <section id="tab-warehouses" class="tab-content hidden space-y-3 w-full">
+      <section id="tab-warehouses" class="tab-content hidden space-y-3 w-full animate-fade">
         <div class="flex items-center justify-between">
-          <h2 class="font-extrabold text-base">Almacenes y Depósitos</h2>
+          <h2 class="font-extrabold text-base">Almacenes y Depósitos (Resguardo)</h2>
           <button onclick="openWarehouseModal()" class="bg-brand-500 text-darkbg font-bold px-3 py-1.5 rounded-xl text-xs shadow custom-bg-accent"><i data-lucide="plus" class="w-3.5 h-3.5 inline"></i> Crear Almacén</button>
         </div>
         <div id="warehouses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </section>
 
-      <!-- CONFIGURACIÓN -->
-      <section id="tab-settings" class="tab-content hidden space-y-3 w-full">
+      <!-- CONFIGURACIÓN Y RESTABLECIMIENTO TOTAL -->
+      <section id="tab-settings" class="tab-content hidden space-y-3 w-full animate-fade">
         <div class="max-w-xl mx-auto bg-white dark:bg-darkcard border p-4 rounded-2xl shadow-sm space-y-4 custom-card">
           <h2 class="font-bold text-base border-b pb-2 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-brand-500"></i> Configuración General y Apariencia</h2>
+
+          <!-- ZONA DE PELIGRO / RESTABLECIMIENTO TOTAL (SÓLO ADMIN) -->
+          <div class="p-3 bg-red-500/10 border border-red-500/30 rounded-xl space-y-2">
+            <h3 class="font-extrabold text-xs text-red-400 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Restablecimiento Total de Fábrica</h3>
+            <p class="text-[11px] text-slate-300">Borra todo el inventario, ventas, almacenes personalizados y nombre de empresa, dejando la página en blanco. Mantiene únicamente al usuario Administrador.</p>
+            <button onclick="confirmFactoryReset()" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-2 rounded-xl text-xs uppercase shadow transition-all">
+              ⚠️ Borrar Todo y Restablecer Página
+            </button>
+          </div>
 
           <!-- LOGO DE LA EMPRESA -->
           <div class="p-3 border rounded-xl space-y-3 custom-card">
@@ -565,9 +598,10 @@
 
   <script>
     let currentUser = null;
+    let searchCollapsed = false;
     let appState = {
       theme: 'dark',
-      inventoryViewMode: 'list', // 'list' o 'grid'
+      inventoryViewMode: 'list',
       currentPage: 1,
       itemsPerPage: 12,
       colors: { appBg: "#0f172a", cardBg: "#1e293b", textMain: "#f8fafc", textMuted: "#94a3b8", accent: "#eab308" },
@@ -591,7 +625,7 @@
       const bgColor = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white';
       const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'alert-triangle' : 'info';
 
-      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold toast-anim ${bgColor}`;
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold animate-fade ${bgColor}`;
       toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
       container.appendChild(toast);
       lucide.createIcons();
@@ -603,9 +637,18 @@
       }, 3500);
     }
 
+    function showLoader(msg = "Espere un momento, está cargando datos...") {
+      document.getElementById('loader-text').textContent = msg;
+      document.getElementById('global-loader').classList.remove('hidden');
+    }
+    function hideLoader() {
+      document.getElementById('global-loader').classList.add('hidden');
+    }
+
     window.addEventListener('DOMContentLoaded', () => { applyCustomColors(); lucide.createIcons(); });
 
     window.addEventListener('firebase-ready', () => {
+      showLoader("Cargando base de datos...");
       window.onSnapshot(window.doc(window.db, "app_data", "main_state"), (docSnap) => {
         if (docSnap.exists()) {
           const remoteData = docSnap.data();
@@ -622,6 +665,7 @@
           window.setDoc(window.doc(window.db, "app_data", "main_state"), appState);
         }
         renderAll();
+        hideLoader();
       });
 
       window.onSnapshot(window.collection(window.db, "products"), (snapshot) => {
@@ -639,19 +683,23 @@
 
     function handleLogin(e) {
       e.preventDefault();
-      const u = document.getElementById('login-username').value.trim().toLowerCase();
-      const p = document.getElementById('login-password').value.trim();
-      const found = appState.users.find(usr => usr.username.toLowerCase() === u && usr.password === p);
-      if (found) {
-        currentUser = found;
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app-wrapper').classList.remove('hidden');
-        document.getElementById('user-display-name').textContent = currentUser.username;
-        showToast(`¡Bienvenido, ${currentUser.username}!`, 'success');
-        renderAll();
-      } else {
-        document.getElementById('login-error').classList.remove('hidden');
-      }
+      showLoader("Verificando credenciales...");
+      setTimeout(() => {
+        const u = document.getElementById('login-username').value.trim().toLowerCase();
+        const p = document.getElementById('login-password').value.trim();
+        const found = appState.users.find(usr => usr.username.toLowerCase() === u && usr.password === p);
+        hideLoader();
+        if (found) {
+          currentUser = found;
+          document.getElementById('login-screen').classList.add('hidden');
+          document.getElementById('app-wrapper').classList.remove('hidden');
+          document.getElementById('user-display-name').textContent = currentUser.username;
+          showToast(`¡Bienvenido, ${currentUser.username}!`, 'success');
+          renderAll();
+        } else {
+          document.getElementById('login-error').classList.remove('hidden');
+        }
+      }, 400);
     }
 
     function handleLogout() { location.reload(); }
@@ -708,7 +756,6 @@
       }
 
       const logoUrl = appState.settings.logoUrl;
-
       const headerLogoImg = document.getElementById('header-logo-img');
       const headerBrandIcon = document.getElementById('header-brand-icon');
       if (logoUrl) {
@@ -784,10 +831,64 @@
       showToast("Fondo de pantalla de Login guardado", "success");
     }
 
-    // CAMBIAR MODO DE VISTA EN INVENTARIO (LISTA / CUADRO)
+    // FUNCIÓN DE RESTABLECIMIENTO TOTAL DE FÁBRICA
+    async function confirmFactoryReset() {
+      if (!currentUser || currentUser.role !== 'admin') {
+        showToast("Acceso denegado: Solo el Administrador puede restablecer el sistema.", "error");
+        return;
+      }
+      if (confirm("⚠️ ¿Estás COMPLETAMENTE SEGURO de restablecer la página? Se borrará TODO el inventario, ventas y datos, dejándolo en blanco (solo se mantendrá el usuario Administrador).")) {
+        showLoader("Borrando y restableciendo sistema...");
+        try {
+          // Borrar productos
+          const prodSnap = await window.getDocs(window.collection(window.db, "products"));
+          const batch1 = window.writeBatch(window.db);
+          prodSnap.forEach(d => batch1.delete(d.ref));
+          await batch1.commit();
+
+          // Borrar ventas
+          const salesSnap = await window.getDocs(window.collection(window.db, "sales"));
+          const batch2 = window.writeBatch(window.db);
+          salesSnap.forEach(d => batch2.delete(d.ref));
+          await batch2.commit();
+
+          // Restablecer state principal
+          appState.settings = {
+            storeName: "MI EMPRESA", storeSubtitle: "Sucursal Principal",
+            doc: "", phone: "", address: "", currency: "$", logoUrl: "", loginBgUrl: ""
+          };
+          appState.warehouses = [{ id: "wh_1", name: "Almacén Principal" }];
+          appState.categories = ["General"];
+          appState.users = [{ id: "u_1", username: "admin", password: "leon", role: "admin" }];
+
+          await saveStateRemote();
+          hideLoader();
+          showToast("¡Sistema restablecido con éxito! La página ha quedado en blanco.", "success");
+          setTimeout(() => location.reload(), 1500);
+        } catch (err) {
+          hideLoader();
+          console.error(err);
+          showToast("Error al restablecer el sistema", "error");
+        }
+      }
+    }
+
+    // COLAPSAR O EXPANDIR BUSCADOR EN INVENTARIO
+    function toggleSearchCollapse() {
+      searchCollapsed = !searchCollapsed;
+      const box = document.getElementById('search-collapse-box');
+      const lbl = document.getElementById('collapse-lbl');
+      if (searchCollapsed) {
+        box.classList.add('hidden');
+        lbl.textContent = "Mostrar Filtros";
+      } else {
+        box.classList.remove('hidden');
+        lbl.textContent = "Ocultar Filtros";
+      }
+    }
+
     function setInventoryViewMode(mode) {
       appState.inventoryViewMode = mode;
-      
       const btnList = document.getElementById('view-btn-list');
       const btnGrid = document.getElementById('view-btn-grid');
 
@@ -805,15 +906,20 @@
 
     function switchTab(tabId) {
       if (currentUser && currentUser.role === 'seller' && tabId === 'settings') { showToast("Acceso restringido", "error"); return; }
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      document.querySelectorAll('.tab-link').forEach(btn => {
-        btn.classList.remove('bg-brand-500', 'text-darkbg', 'shadow-sm', 'custom-bg-accent');
-        btn.classList.add('text-slate-600', 'dark:text-slate-300');
-      });
-      document.getElementById(`tab-btn-${tabId}`).classList.add('bg-brand-500', 'text-darkbg', 'shadow-sm', 'custom-bg-accent');
-      if (tabId === 'sales') renderSalesHistory();
-      lucide.createIcons();
+      
+      showLoader(`Abriendo módulo ${tabId}...`);
+      setTimeout(() => {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+        document.querySelectorAll('.tab-link').forEach(btn => {
+          btn.classList.remove('bg-brand-500', 'text-darkbg', 'shadow-sm', 'custom-bg-accent');
+          btn.classList.add('text-slate-600', 'dark:text-slate-300');
+        });
+        document.getElementById(`tab-btn-${tabId}`).classList.add('bg-brand-500', 'text-darkbg', 'shadow-sm', 'custom-bg-accent');
+        if (tabId === 'sales') renderSalesHistory();
+        hideLoader();
+        lucide.createIcons();
+      }, 250);
     }
 
     function renderAll() {
@@ -858,7 +964,8 @@
     function clearSearch() { document.getElementById('inventory-search').value = ''; appState.currentPage = 1; renderInventory(); }
 
     function renderInventory() {
-      const search = document.getElementById('inventory-search').value.toLowerCase().trim();
+      const searchInput = document.getElementById('inventory-search');
+      const search = searchInput ? searchInput.value.toLowerCase().trim() : '';
       const catFilter = document.getElementById('inventory-cat-filter').value || 'all';
       const whFilter = document.getElementById('inventory-wh-filter').value || 'all';
       const statusFilter = document.getElementById('inventory-status-filter').value || 'all';
@@ -919,7 +1026,6 @@
         });
 
         if (isGrid) {
-          // TARJETA TIPO CUADRO (GRID)
           html += `
             <div class="bg-white dark:bg-darkcard border rounded-2xl p-2.5 shadow-sm flex flex-col justify-between space-y-2 custom-card">
               <div>
@@ -938,7 +1044,6 @@
               <div class="bg-slate-50 dark:bg-darkbg/50 px-2 py-1 rounded-xl w-full">${whRows}</div>
             </div>`;
         } else {
-          // FILA TIPO LISTA
           html += `
             <div class="bg-white dark:bg-darkcard border rounded-2xl p-3 shadow-sm space-y-1.5 custom-card">
               <div class="flex justify-between items-start">
@@ -1121,6 +1226,7 @@
 
     async function processSale(status = 'completed') {
       if (appState.cart.length === 0) return;
+      showLoader("Procesando venta y actualizando inventario...");
       const whId = document.getElementById('pos-warehouse-select').value;
       const whName = appState.warehouses.find(w => w.id === whId)?.name || "Almacén";
       const payment = document.getElementById('pos-payment-method').value;
@@ -1164,6 +1270,7 @@
 
       await window.addDoc(window.collection(window.db, "sales"), sale);
       appState.lastCompletedSale = sale;
+      hideLoader();
 
       if (status === 'completed') {
         showToast(`¡Comprobante ${saleNum} creado con éxito!`, 'success');
@@ -1174,20 +1281,36 @@
       appState.cart = []; renderPOSCart(); renderHeader();
     }
 
+    function filterSalesToday() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('sales-date-from').value = today;
+      document.getElementById('sales-date-to').value = today;
+      renderSalesHistory();
+    }
+
     function renderSalesHistory() {
       const container = document.getElementById('sales-list-container');
       if (!container) return;
       container.innerHTML = '';
-      if (!appState.salesHistory.length) { container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 bg-white dark:bg-darkcard rounded-2xl border custom-card">No hay ventas.</p>`; return; }
+      if (!appState.salesHistory.length) { container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 bg-white dark:bg-darkcard rounded-2xl border custom-card">No hay ventas registradas.</p>`; return; }
+
+      const dateFrom = document.getElementById('sales-date-from').value;
+      const dateTo = document.getElementById('sales-date-to').value;
 
       let sum = 0;
-      appState.salesHistory.forEach(sale => {
+      let filteredSales = appState.salesHistory.filter(sale => {
+        if (dateFrom && sale.dateISO < dateFrom) return false;
+        if (dateTo && sale.dateISO > dateTo) return false;
+        return true;
+      });
+
+      filteredSales.forEach(sale => {
         if (sale.status === 'completed') sum += (sale.totalAmount || 0);
         container.innerHTML += `
           <div class="bg-white dark:bg-darkcard border p-3 rounded-2xl shadow-sm space-y-1 text-xs custom-card flex justify-between items-center">
             <div>
               <p class="font-extrabold text-brand-500">${sale.saleNum} <span class="text-[10px] text-slate-400">(${sale.dateTimeStr})</span></p>
-              <p class="custom-text-main font-semibold">Cliente: ${sale.customer?.name} - Total: $${(sale.totalAmount || 0).toFixed(2)}</p>
+              <p class="custom-text-main font-semibold">Cliente: ${sale.customer?.name} | Vendedor: ${sale.seller || 'admin'} | Pago: ${sale.paymentMethod} - Total: $${(sale.totalAmount || 0).toFixed(2)}</p>
             </div>
             <div class="flex gap-1">
               <button onclick="openEditSaleModal('${sale.id}')" class="p-1.5 text-blue-400 hover:bg-slate-100 dark:hover:bg-darkbg rounded" title="Editar Comprobante"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
@@ -1239,14 +1362,14 @@
       
       const logoImg = document.getElementById('receipt-logo-img');
       const logoContainer = document.getElementById('receipt-logo-container');
-      if (sale.store.logoUrl) {
+      if (sale.store && sale.store.logoUrl) {
         logoImg.src = sale.store.logoUrl;
         logoContainer.classList.remove('hidden');
       } else {
         logoContainer.classList.add('hidden');
       }
 
-      document.getElementById('receipt-store-name').textContent = sale.store.storeName;
+      document.getElementById('receipt-store-name').textContent = sale.store?.storeName || appState.settings.storeName;
       document.getElementById('receipt-num').textContent = sale.saleNum;
       document.getElementById('receipt-date').textContent = sale.dateTimeStr;
       document.getElementById('receipt-payment-method').textContent = sale.paymentMethod;
@@ -1284,7 +1407,7 @@
       if (!sale) return;
       downloadReceiptPDF();
       const phone = sale.customer?.phone ? sale.customer.phone.replace(/[^0-9]/g, '') : '';
-      let msg = `*${sale.store.storeName}*\nHola *${sale.customer.name}*, tu comprobante ${sale.saleNum} por $${sale.totalAmount.toFixed(2)} ha sido generado en PDF. ¡Gracias por tu compra!`;
+      let msg = `*${sale.store?.storeName || appState.settings.storeName}*\nHola *${sale.customer.name}*, tu comprobante ${sale.saleNum} por $${sale.totalAmount.toFixed(2)} ha sido generado en PDF. ¡Gracias por tu compra!`;
       window.open(phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
@@ -1353,6 +1476,7 @@
 
     async function saveProduct(e) {
       e.preventDefault();
+      showLoader("Guardando producto...");
       const id = document.getElementById('prod-id').value;
       const name = document.getElementById('prod-name').value;
       const stock = {};
@@ -1373,9 +1497,11 @@
       
       if (id) {
         await window.updateDoc(window.doc(window.db, "products", id), prod);
+        hideLoader();
         showToast(`¡El artículo "${name}" fue modificado correctamente!`, "success");
       } else {
         await window.addDoc(window.collection(window.db, "products"), prod);
+        hideLoader();
         showToast(`¡El artículo "${name}" fue creado con éxito!`, "success");
       }
       closeProductModal();
